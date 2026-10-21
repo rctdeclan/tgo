@@ -18,6 +18,7 @@ export function attachTwoFingerTimeline(node, viewport, {
 
   function update(event) {
     if (event.touches.length !== 2) {
+      if (previous) suppressClickUntil = Date.now() + 500
       previous = null
       onActiveChange(false)
       return
@@ -38,6 +39,7 @@ export function attachTwoFingerTimeline(node, viewport, {
   }
 
   function cancel() {
+    if (previous) suppressClickUntil = Date.now() + 500
     previous = null
     onActiveChange(false)
   }

@@ -54,9 +54,17 @@ test('one finger stays a tap; completed navigation suppresses its synthetic clic
   assert.equal(calls, 0)
   node.send('touchstart', [finger(1, 200), finger(2, 400)])
   node.send('touchmove', [finger(1, 210), finger(2, 410)])
-  node.send('touchend')
-  const click = node.send('click')
-  assert.ok(click.prevented && click.stopped)
+  // A held gesture must still suppress the click when the fingers finally lift.
+  const realNow = Date.now
+  const later = realNow() + 1000
+  try {
+    Date.now = () => later
+    node.send('touchend')
+    const click = node.send('click')
+    assert.ok(click.prevented && click.stopped)
+  } finally {
+    Date.now = realNow
+  }
   dispose()
 })
 
