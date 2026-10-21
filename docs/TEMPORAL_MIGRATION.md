@@ -1,3 +1,5 @@
+> Historical implementation-phase report. The source is now committed/published at b765f60; current Linux verification and follow-up tasks are in [CLOUD_BASELINE.md](CLOUD_BASELINE.md). References below to uncommitted work, no push or unverified Linux describe that earlier phase.
+
 # Temporal Migration Implementation Report
 
 Updated: 2026-10-21. The corrected full Temporal request authorizes necessary P4/P5 completion. Prior to this task, P4/P5 were absent: there was no custom semantic engine to simplify. The migration replaces the older synthetic calculation paths with one shared Temporal-backed API. No commit or push.

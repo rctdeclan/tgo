@@ -2,7 +2,7 @@
 
 ## Authority and scope
 
-The corrected full Temporal request and subsequent user replies define current calendar scope. P2-P3 Cookbook and P4/P5 Temporal integration are implemented and ready for review. The user authorized a verified handoff commit and push to an existing intended remote on 2026-10-21; no remote is currently configured. Future commits/pushes require task authorization. Only the main replanner project is in scope; do not audit/edit sibling archives or revert unrelated changes.
+The corrected full Temporal request and subsequent user replies define current calendar scope. P2-P3 Cookbook and P4/P5 Temporal integration are implemented and ready for review. The current task establishes a documentation-only Codex Cloud baseline: do not change application code or introduce features. The repository is now published at https://github.com/rctdeclan/tgo; main tracks origin/main. Earlier authorization covers a verified handoff commit/push. Future commits/pushes require task authorization. Only the main replanner project is in scope; do not audit/edit sibling archives or revert unrelated changes.
 
 ## Cookbook: mandatory and unchanged
 
@@ -47,7 +47,7 @@ npm run dev -- --host 0.0.0.0
 
 49 tests pass: Cookbook lifecycle/wiring/isolation, Temporal/DST/negative/history indexes, calendar projection/rank routing, cursor anchoring, controlled adapters and real React 640px SSR. Host-TZ independence is also checked. Production build passes. No lint/type-check scripts are configured.
 
-Real headless Google Chrome smoke tests passed initial rendering, native wheel/keyboard/header actions, inline creation, routing and DOM header/grid/list alignment without application errors. A temporary external playwright-core driver was used because the built-in browser tool could not start; no application browser-test dependency was added. This does NOT certify physical Safari/macOS pinch, history gestures or all animation paint cases. Linux/Codex Cloud runtime remains unverified. The iCloud dependency tree can cause long cold reads; a build alone is not evidence of page loading.
+Real headless Google Chrome smoke tests passed initial rendering, native wheel/keyboard/header actions, inline creation, routing and DOM header/grid/list alignment without application errors. A temporary external playwright-core driver was used because the built-in browser tool could not start; no application browser-test dependency was added. This does NOT certify physical Safari/macOS pinch, history gestures or all animation paint cases. Linux/Codex Cloud tests, build and Vite HTTP serving now pass; see docs/CLOUD_BASELINE.md for current browser evidence and runtime versions. The iCloud dependency tree can cause long cold reads; a build alone is not evidence of page loading.
 
 ## Documentation
 
@@ -59,10 +59,14 @@ Real headless Google Chrome smoke tests passed initial rendering, native wheel/k
 - docs/COOKBOOK_PROGRESS.md and original audit/migration documents retain historical evidence; current calendar documents supersede old pending statuses.
 - tests/README.md: suite coverage and limits.
 
-## Local development environment caveat
+## Historical Mac development environment caveat
 
-Actual-project tests/build and Chrome production-preview smoke checks passed after integration. The identical-source /private/tmp development server works, but this iCloud-backed project's Vite development server can stall even on HTML requests. Do not treat the successful build or preview as proof that npm run dev works at this path. No dependency relocation workaround has been applied; do not silently move/link node_modules. Linux execution and physical Safari gestures remain unverified.
+Actual-project tests/build and Chrome production-preview smoke checks passed after integration. The identical-source /private/tmp development server works, but the original iCloud-backed project's Vite development server can stall even on HTML requests. Do not treat the successful build or preview as proof that npm run dev works at this path. No dependency relocation workaround has been applied; do not silently move/link node_modules. Linux execution now passes; physical Safari gestures remain unverified.
 
-## Cloud handoff verification
+## Codex Cloud baseline (2026-10-21)
 
-2026-10-21: actual-project 49 tests/build pass; fresh source-only npm ci from the lockfile also passes 49 tests/build, plus 10 calendar/header checks under a different host timezone. Chrome smoke passes the clean development checkout. No Linux/Docker run was available. Read docs/CLOUD_HANDOFF.md for GitHub connection instructions, verification evidence and limitations. No GitHub remote/upstream currently exists. Futura is not bundled; Linux font fallback can affect visuals. .nvmrc records Node 22.14.0; the workspace opens only this project. Common local secrets and generated outputs are ignored. Do not add persistence or redesign lanes during transfer.
+Read docs/CLOUD_BASELINE.md for current evidence, limitations and next tasks. Fresh public clone at b765f608285ef913f94ede1da0f977a502d169ae; main tracks origin/main at https://github.com/rctdeclan/tgo.git. git pull --ff-only was already up to date. No unfinished local changes were present at initial inspection.
+
+Linux x86_64, default Node 24.19.0/npm 11.9.0. npm ci installed 67 packages with the tracked lockfile unchanged; all 49 tests and production build pass. The repository reference remains Node 22.14.0 (.nvmrc); all 49 tests and production build also pass with that exact runtime. Vite starts and serves HTML/main module HTTP 200 at this checkout; the Mac iCloud path issue is historical. No lint/type-check scripts exist. A scoped credential-pattern scan found no matches; generated outputs/dependencies/common secret paths are ignored and not tracked.
+
+npm audit reports 9 development dependency findings (6 high, 2 moderate, 1 low); npm audit --omit=dev reports zero. Do not silently run npm audit fix or upgrade the lockfile in baseline work. Review Vite/esbuild and transitive tooling updates as a separate maintenance task. Futura is not bundled; Linux font fallback affects visuals. Browser checks do not certify physical Safari gestures or exhaustive motion/visual behavior. No lane redesign, persistence or new features are authorized.

@@ -28,6 +28,6 @@ The mixed-up earlier P5 attachment's two-level header phrase does not authorize 
 
 ## Remaining work
 
-P4/P5 are implemented and ready for review; see CALENDAR.md, TEMPORAL_MIGRATION.md and IMPLEMENTATION_STATUS.md for evidence. Physical Safari/trackpad testing, exhaustive browser animation/visual review, Linux/Cloud validation and existing clipping/cache defects remain. Those are not permission to redesign lanes or introduce persistence.
+P4/P5 are implemented and ready for review; see CALENDAR.md, TEMPORAL_MIGRATION.md and IMPLEMENTATION_STATUS.md for evidence. Physical Safari/trackpad testing, exhaustive browser animation/visual review and existing clipping/cache defects remain. Linux/Cloud tests/build and server verification now pass; see CLOUD_BASELINE.md for evidence and limits. Those are not permission to redesign lanes or introduce persistence.
 
-No essential policy ambiguity blocks the supported positive-integer event model. Future fractional semantics, lane replacement and unrelated scheduling features require separate decisions. Verified handoff commit is authorized; publication requires a configured GitHub remote.
+No essential policy ambiguity blocks the supported positive-integer event model. Future fractional semantics, lane replacement and unrelated scheduling features require separate decisions. The implementation is published on main at https://github.com/rctdeclan/tgo.git. Cloud initialization is documentation-only; current verification and next tasks are in CLOUD_BASELINE.md.

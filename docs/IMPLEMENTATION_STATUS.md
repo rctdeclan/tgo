@@ -21,15 +21,17 @@ Updated: 2026-10-21. P2-P3 Cookbook and P4/P5 Temporal integration are implement
 | Fractional event amounts | Explicitly deferred; not approximated |
 | Existing row-cache loss/list clipping/offscreen stroke labels | Still present; not repaired or adopted as intended design |
 | Persistence/backend/new lane architecture | Not introduced |
-| Linux/Codex Cloud runtime | Not verified in this phase; use fresh npm ci, never copy macOS node_modules |
+| Linux/Codex Cloud runtime | Fresh npm ci, 49 tests, build and Vite HTTP serving pass; current evidence in CLOUD_BASELINE.md |
 
-The user has authorized the verified Cloud-handoff commit; GitHub publication remains blocked by the missing remote. See TEMPORAL_MIGRATION.md for file inventory, test increments and remaining limitations; CALENDAR.md documents the API and distinction between calendar addition, cell traversal, elapsed fractions and projection.
+The implementation is published at origin (https://github.com/rctdeclan/tgo.git), with main tracking origin/main. See CLOUD_BASELINE.md for current Cloud verification and outstanding issues. See TEMPORAL_MIGRATION.md for file inventory, test increments and remaining limitations; CALENDAR.md documents the API and distinction between calendar addition, cell traversal, elapsed fractions and projection.
 
-## Actual-path environment check
+## Historical Mac actual-path environment check
 
 The main project's 49 tests, production build and diff-whitespace check pass. Real Chrome smoke checks pass against its production preview (port 5182). The same source runs successfully under the local /private/tmp development server, but the iCloud-backed development server still stalls on requests; actual-path npm run dev is not verified working. No node_modules relocation was performed.
 
-## Cloud handoff verification
+## Historical Mac handoff verification
+
+These pre-publication results are preserved as history. Missing-remote and unverified-Linux statements below are superseded by CLOUD_BASELINE.md.
 
 2026-10-21: all 49 tests/build pass in the actual project and after a fresh source-only lockfile install outside iCloud; 10 calendar/header tests pass under Pacific/Honolulu. Chrome smoke passes the clean development checkout. Common secret/build/dependency paths are ignored and not tracked. Linux/Cloud execution and physical Safari remain unverified. Futura is not bundled and can fall back on Linux. See CLOUD_HANDOFF.md for reproducible setup and missing-remote steps. Commit is authorized by the user; no remote is configured for publication.
 

@@ -98,4 +98,6 @@ Existing lost row-cache writes, list clipping and offscreen labels on long strok
 
 ## Cloud handoff
 
+Linux Cloud verification now passes at the source baseline b765f60; main tracks origin/main at https://github.com/rctdeclan/tgo.git. See [CLOUD_BASELINE.md](CLOUD_BASELINE.md) for actual runtime versions, tests/build, browser checks, dependency audit findings and recommended tasks. Initialization changes documentation only.
+
 The repository is a standalone Vite/React project rooted here; sibling archives are not dependencies. Use Node 22.14.0 (.nvmrc), npm ci including devDependencies, npm test and npm run build. No secrets or external services are required. Native dependencies must be installed on the destination platform; never transfer macOS node_modules. See CLOUD_HANDOFF.md for the current verification record, GitHub connection procedure and known iCloud-development-server limitation. Historical audit documents are preserved, not current architecture authority.

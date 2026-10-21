@@ -1,6 +1,6 @@
 # TGO Migration Plan and Current Phase Status
 
-Updated: 2026-10-21. The corrected full Temporal request and subsequent routing/fraction/offset decisions supersede older pending proposals. Main replanner only. Verified handoff commit authorized by the user; GitHub remote configuration remains outstanding.
+Updated: 2026-10-21. The corrected full Temporal request and subsequent routing/fraction/offset decisions supersede older pending proposals. Main replanner only. The implementation is published on main at origin (https://github.com/rctdeclan/tgo.git). Linux Cloud baseline verification is recorded in CLOUD_BASELINE.md; recommended follow-up tasks there are recommendations, not feature authorization.
 
 | Phase | Current status | Evidence / boundary |
 | --- | --- | --- |

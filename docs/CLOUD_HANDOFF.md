@@ -1,5 +1,13 @@
 # TGO: Mac to Cloud Handoff
 
+## Current Cloud status (2026-10-21)
+
+The repository is published at https://github.com/rctdeclan/tgo.git. A fresh Linux clone is on main tracking origin/main; git pull --ff-only reports already up to date at b765f608285ef913f94ede1da0f977a502d169ae. Dependency installation, 49 tests, production build and Vite HTTP serving pass in Codex Cloud. Read [CLOUD_BASELINE.md](CLOUD_BASELINE.md) for current runtime/browser evidence, dependency audit findings and next tasks. AGENTS.md and ARCHITECTURE.md describe current invariants. No application source or dependency versions are changed by initialization.
+
+The original handoff record below is historical Mac evidence. Its missing-remote and unverified-Linux statements describe the pre-publication state and are superseded by the Cloud baseline. Its limitations remain unless explicitly reverified there.
+
+## Historical Mac handoff record
+
 Prepared 2026-10-21. Scope: this repository only, not sibling archives. The user authorized verification, documentation, a commit and a push if an intended remote exists. Branch: main. At inspection, no Git remote or upstream was configured; no GitHub repository URL is known. No repository was created and no remote was guessed.
 
 ## Reproduce on another machine
