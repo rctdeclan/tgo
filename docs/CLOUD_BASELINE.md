@@ -6,7 +6,7 @@ The repository is ready for continued Codex Cloud development with the limitatio
 
 ## Publication status
 
-The verified documentation commit is local on main. `git push origin main` was attempted and rejected with HTTP 403: “Permission to rctdeclan/tgo.git denied to rctdeclan.” Public repository visibility enables reading but does not establish write access for this Cloud session. Enable repository Contents read/write access for the Codex/GitHub connection or provide an authorized Git identity through the supported environment configuration, then retry `git push origin main`. Do not force-push. The remote source baseline remains available; the Cloud documentation update has not been published by this session. Retrieve its local hash with `git log -1 --format=%H`.
+Resolved: after the user updated the GitHub connection, `git push origin main` succeeded and published the verified documentation commit `5041e0c39b1fa840c126d48a78a45e5a20e78330` to https://github.com/rctdeclan/tgo. The earlier attempt returned HTTP 403; that access failure is historical. This session now has verified push access to origin/main. No force-push or application changes were needed. Retrieve the latest local documentation commit with `git log -1 --format=%H`.
 
 ## Setup and verification
 
