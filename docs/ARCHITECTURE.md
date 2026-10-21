@@ -101,3 +101,7 @@ Existing lost row-cache writes, list clipping and offscreen labels on long strok
 Linux Cloud verification now passes at the source baseline b765f60; main tracks origin/main at https://github.com/rctdeclan/tgo.git. See [CLOUD_BASELINE.md](CLOUD_BASELINE.md) for actual runtime versions, tests/build, browser checks, dependency audit findings and recommended tasks. Initialization changes documentation only.
 
 The repository is a standalone Vite/React project rooted here; sibling archives are not dependencies. Use Node 22.14.0 (.nvmrc), npm ci including devDependencies, npm test and npm run build. No secrets or external services are required. Native dependencies must be installed on the destination platform; never transfer macOS node_modules. See CLOUD_HANDOFF.md for the current verification record, GitHub connection procedure and known iCloud-development-server limitation. Historical audit documents are preserved, not current architecture authority.
+
+## Touch responsiveness
+
+Two-finger input coalesces to one sample per animation frame and invokes transformGesture through the existing viewport.navigate gamma. Zoom/pan complete before one Body refresh. Strokes layout reuses derived geometry until event revision, unit or origin changes; Header caches bounded cell geometry/labels and updates current-period tint independently. Views mount visible grid/header elements with overscan while retaining the full semantic model. No lane algorithm or calendar policy changes. See TOUCH_NAVIGATION.md for measured performance and device limits.

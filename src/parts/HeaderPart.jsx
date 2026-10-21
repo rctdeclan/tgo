@@ -21,9 +21,22 @@ export class HeaderPart {
   }
 
   present(alpha) {
+    let cached
+    const geometry = new Map()
     const gamma = (viewport, now) => {
-      const origin = coordinate(viewport.worldOriginTime, viewport.unit)
       const half = Math.floor((viewport.visibleCells ?? VISIBLE) / 2)
+      if (cached && cached.origin === viewport.worldOriginTime && cached.unitIndex === viewport.unitIndex && cached.half === half) {
+        const rows = cached.rows.map(row => {
+          const groups = row.groups.map(group => {
+            const isCurrent = now >= group.startTime && now < group.endTime
+            return isCurrent === group.isCurrent ? group : { ...group, isCurrent }
+          })
+          return groups.every((group, i) => group === row.groups[i]) ? row : { ...row, groups }
+        })
+        cached.rows = rows
+        return alpha({ viewport, now, rows })
+      }
+      const origin = coordinate(viewport.worldOriginTime, viewport.unit)
       const left = instantAt(origin - half, viewport.unit)
       const right = instantAt(origin + half, viewport.unit)
       const rows = [viewport.unitIndex + 2, viewport.unitIndex + 1, viewport.unitIndex]
@@ -32,17 +45,27 @@ export class HeaderPart {
           const unit = UNIT_ORDER[index]
           const groups = []
           for (let cell = cellAt(left, unit); cell.start < right; cell = nextCell(cell)) {
+            const key = `${viewport.unit}:${unit}:${cell.start}`
+            let group = geometry.get(key)
+            if (!group) {
+              group = { start: coordinate(cell.start, viewport.unit), end: coordinate(cell.end, viewport.unit),
+                label: headerLabel(cell.start, unit) }
+              geometry.set(key, group)
+              if (geometry.size > 512) geometry.delete(geometry.keys().next().value)
+            }
             groups.push({
-              startI: coordinate(cell.start, viewport.unit) - origin,
-              endI: coordinate(cell.end, viewport.unit) - origin - 1,
+              startI: group.start - origin,
+              endI: group.end - origin - 1,
               startTime: cell.start,
-              label: headerLabel(cell.start, unit),
+              endTime: cell.end,
+              label: group.label,
               isCurrent: now >= cell.start && now < cell.end
             })
           }
           return { unitIndex: index, unit, y: ROW_Y[rowOrder], groups,
             clickIndex: rowOrder === 2 ? viewport.unitIndex - 1 : index }
         })
+      cached = { origin: viewport.worldOriginTime, unitIndex: viewport.unitIndex, half, rows }
       return alpha({ viewport, now, rows })
     }
     return gamma
@@ -112,6 +135,7 @@ export class HeaderPart {
                 const startX = (group.startI + half) * cellWidth
                 const spanWidth = (group.endI - group.startI + 1) * cellWidth
                 const endX = startX + spanWidth
+                if (endX < visibleMinX - cellWidth || startX > visibleMaxX + cellWidth) return null
                 const intersectsViewport =
                   endX > visibleMinX && startX < visibleMaxX
                 const label = group.label

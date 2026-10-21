@@ -18,6 +18,7 @@ export class StrokesPart {
   constructor(){
     this.events = []
     this.listeners = []
+    this.layoutRevision = 0
   }
 
   insert(alpha) {
@@ -61,7 +62,14 @@ export class StrokesPart {
 
   layout(alpha) {
     const part = this
-    const gamma = viewport => alpha(part.getLayout(viewport.unit, viewport.worldOriginTime))
+    let cached
+    const gamma = viewport => {
+      if (!cached || cached.revision !== part.layoutRevision || cached.unit !== viewport.unit || cached.origin !== viewport.worldOriginTime) {
+        cached = { revision: part.layoutRevision, unit: viewport.unit, origin: viewport.worldOriginTime,
+          layout: part.getLayout(viewport.unit, viewport.worldOriginTime) }
+      }
+      return alpha(cached.layout)
+    }
     return gamma
   }
 
@@ -77,6 +85,7 @@ export class StrokesPart {
       positionsByUnit: { ...(e.positionsByUnit || {}) },
       color: e.color || this.colorForIndex(this.events.length)
     })
+    this.layoutRevision++
     this.emitChange()
   }
 
@@ -179,6 +188,11 @@ export class StrokesPart {
     const worldWidth = cellWidth * (vp.visibleCells ?? VISIBLE)
     const worldLeft = -half * cellWidth
 
+    // Keep the model's coverage, but mount only visible grid cells plus a buffer.
+    const firstColumn = Math.max(-half, Math.floor((-FRAME_WIDTH / 2 - vp.worldOffsetPx) / cellWidth) - 1)
+    const lastColumn = Math.min(half - 1, Math.ceil((FRAME_WIDTH / 2 - vp.worldOffsetPx) / cellWidth) + 1)
+    const gridColumns = Array.from({ length: lastColumn - firstColumn + 1 }, (_, i) => firstColumn + i + half)
+
     const cellBodyWidth = Math.max(1, cellWidth - GAP)
     const inputWidth = Math.max(120, cellBodyWidth)
 
@@ -228,7 +242,7 @@ export class StrokesPart {
             width={worldWidth}
             height={CELL_HEIGHT}
           >
-            {Array.from({length:vp.visibleCells ?? VISIBLE}).map((__,idx)=>{
+            {gridColumns.map(idx=>{
               const x = idx*cellWidth
               const cellKey = `${row}-${idx}`
               const isHovered = hoveredCellKey === cellKey

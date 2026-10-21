@@ -130,6 +130,7 @@ function AppPresentation({ parts, app }) {
     panBy: (...args) => app.navigate("panBy", ...args),
     panUnits: (...args) => app.navigate("panUnits", ...args),
     zoomByScaleFactor: (...args) => app.navigate("zoomByScaleFactor", ...args),
+    transformGesture: (...args) => app.navigate("transformGesture", ...args),
     stepUnit: (...args) => app.navigate("stepUnit", ...args)
   }
   return (

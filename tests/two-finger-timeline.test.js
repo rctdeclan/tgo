@@ -102,3 +102,40 @@ test('touch pinch is ignored by use-gesture to prevent duplicate zoom delivery',
   }
   assert.equal(calls, 0)
 })
+
+test('touch bursts use one atomic update per frame and flush the final pending move', () => {
+  const node = target()
+  const calls = []
+  const frames = new Map()
+  let next = 0
+  const dispose = attachTwoFingerTimeline(node, {
+    transformGesture: (...args) => calls.push(args),
+    panBy() { throw Error('separate pan refresh') },
+    zoomByScaleFactor() { throw Error('separate zoom refresh') }
+  }, {
+    requestFrame: callback => { frames.set(++next, callback); return next },
+    cancelFrame: handle => frames.delete(handle)
+  })
+  node.send('touchstart', [finger(1, 200), finger(2, 400)])
+  for (let x = 1; x <= 20; x++) node.send('touchmove', [finger(1, 200 + x), finger(2, 400 + x)])
+  assert.equal(calls.length, 0)
+  assert.equal(frames.size, 1)
+  frames.values().next().value()
+  assert.equal(calls.length, 1)
+  assert.deepEqual(calls[0].slice(0, 3), [200, 1, -20])
+  node.send('touchmove', [finger(1, 230), finger(2, 430)])
+  node.send('touchend')
+  assert.equal(calls.length, 2)
+  assert.deepEqual(calls[1].slice(0, 3), [220, 1, -10])
+  assert.equal(frames.size, 0)
+  // Stationary events and cancelled queued work do not cause refreshes.
+  node.send('touchstart', [finger(1, 230), finger(2, 430)])
+  node.send('touchmove', [finger(1, 230), finger(2, 430)])
+  frames.values().next().value()
+  assert.equal(calls.length, 2)
+  node.send('touchmove', [finger(1, 240), finger(2, 440)])
+  node.send('touchcancel')
+  assert.equal(frames.size, 0)
+  assert.equal(calls.length, 2)
+  dispose()
+})

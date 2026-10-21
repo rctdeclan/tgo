@@ -92,8 +92,13 @@ export function useTrackpadTimeline(viewport, options = {}){
     if (!ref.current) return undefined
     return attachTwoFingerTimeline(ref.current, {
       panBy: delta => viewportRef.current.panBy(delta),
+      transformGesture: (...args) => viewportRef.current.transformGesture(...args),
       zoomByScaleFactor: (...args) => viewportRef.current.zoomByScaleFactor(...args)
-    }, { width, minScale, maxScale, onActiveChange: active => { touchActiveRef.current = active } })
+    }, { width, minScale, maxScale,
+      requestFrame: callback => window.requestAnimationFrame(callback),
+      cancelFrame: handle => window.cancelAnimationFrame(handle),
+      onActiveChange: active => { touchActiveRef.current = active }
+    })
   }, [width, minScale, maxScale])
 
   useEffect(()=>{

@@ -60,6 +60,10 @@ export function createViewport(config = {}) {
   function panBy(delta) {
     if (Number.isFinite(delta)) setState({ worldOffsetPx: state.worldOffsetPx - delta })
   }
+  function transformGesture(x, factor, delta, width = WIDTH, bounds = {}) {
+    if (factor !== 1) zoomByScaleFactor(x, factor, width, bounds)
+    if (delta !== 0) panBy(delta)
+  }
   function panUnits(amount) { panBy(amount * BASE_WIDTH * state.zoom) }
   function jumpTo(index, instant) {
     if (!Number.isFinite(index)) return
@@ -89,6 +93,6 @@ export function createViewport(config = {}) {
       const visibleHalf = Math.max(20, Math.ceil((WIDTH / 2 + Math.abs(state.worldOffsetPx)) / (BASE_WIDTH * state.zoom)) + 2)
       return { ...state, unit: unit(), visibleCells: 2 * visibleHalf }
     },
-    panBy, panUnits, zoomByScaleFactor, jumpTo, stepUnit, stepScale
+    panBy, panUnits, zoomByScaleFactor, transformGesture, jumpTo, stepUnit, stepScale
   }
 }
