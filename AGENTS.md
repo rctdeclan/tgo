@@ -2,7 +2,7 @@
 
 ## Authority and scope
 
-The corrected full Temporal request and subsequent user replies define current calendar scope. P2-P3 Cookbook and P4/P5 Temporal integration are implemented and ready for review. The current task establishes a documentation-only Codex Cloud baseline: do not change application code or introduce features. The repository is now published at https://github.com/rctdeclan/tgo; main tracks origin/main. Earlier authorization covers a verified handoff commit/push. Future commits/pushes require task authorization. Only the main replanner project is in scope; do not audit/edit sibling archives or revert unrelated changes.
+The corrected full Temporal request and subsequent user replies define current calendar scope. P2-P3 Cookbook and P4/P5 Temporal integration are implemented and ready for review. The Cloud initialization task was documentation-only. The subsequent user request authorizes iPad two-finger pan/zoom and Sites deployment; keep changes within that scope. The repository is now published at https://github.com/rctdeclan/tgo; main tracks origin/main. Earlier authorization covers a verified handoff commit/push. Future commits/pushes require task authorization. Only the main replanner project is in scope; do not audit/edit sibling archives or revert unrelated changes.
 
 ## Cookbook: mandatory and unchanged
 
@@ -70,3 +70,7 @@ Read docs/CLOUD_BASELINE.md for current evidence, limitations and next tasks. Fr
 Linux x86_64, default Node 24.19.0/npm 11.9.0. npm ci installed 67 packages with the tracked lockfile unchanged; all 49 tests and production build pass. The repository reference remains Node 22.14.0 (.nvmrc); all 49 tests and production build also pass with that exact runtime. Vite starts and serves HTML/main module HTTP 200 at this checkout; the Mac iCloud path issue is historical. No lint/type-check scripts exist. A scoped credential-pattern scan found no matches; generated outputs/dependencies/common secret paths are ignored and not tracked.
 
 npm audit reports 9 development dependency findings (6 high, 2 moderate, 1 low); npm audit --omit=dev reports zero. Do not silently run npm audit fix or upgrade the lockfile in baseline work. Review Vite/esbuild and transitive tooling updates as a separate maintenance task. Futura is not bundled; Linux font fallback affects visuals. Browser checks do not certify physical Safari gestures or exhaustive motion/visual behavior. No lane redesign, persistence or new features are authorized.
+
+## iPad touch and Sites
+
+The follow-up implements native two-touch pan/continuous pinch via src/hooks/twoFingerTimeline.js and useTrackpadTimeline, preserving desktop thresholds and avoiding duplicate touch/Safari deliveries. See docs/TOUCH_NAVIGATION.md. Current suite: 53 tests and build pass; mobile Chromium multi-touch smoke passes. Physical iPad Safari is still a device check. .openai/hosting.json records the owner-private Sites project and static dist output; reuse its ID. Never commit credentials, generated dist or node_modules. Calendar, routing and lanes remain unchanged.

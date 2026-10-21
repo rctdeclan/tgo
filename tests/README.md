@@ -16,3 +16,5 @@ Use Node 22, npm ci, npm test and npm run build. The Node built-in runner uses e
 TEMPORAL_MIGRATION.md records the real Chrome smoke test and driver limitations. The external temporary playwright-core driver does not alter project dependencies or replace unit tests. Physical Safari/macOS gestures, cross-browser paint timing and exhaustive visuals remain manual. Source assets/spacing and lane algorithm were not redesigned.
 
 Cloud initialization: fresh Linux npm ci, all 49 tests/build and 10 calendar/header tests under TZ=Pacific/Honolulu pass with the lockfile unchanged. See ../docs/CLOUD_BASELINE.md for actual runtime versions, browser evidence and current limits; ../docs/CLOUD_HANDOFF.md preserves historical Mac evidence. No lint/type-check scripts or committed browser runner are present.
+
+Follow-up iPad navigation: 53/53 tests now pass. two-finger-timeline.test.js covers moving midpoint anchoring, finger lifecycle, tap/click behavior and duplicate input suppression. See ../docs/TOUCH_NAVIGATION.md for native Chromium touch smoke evidence and physical iPad limits.

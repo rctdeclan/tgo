@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react"
 import { useGesture } from "@use-gesture/react"
+import { attachTwoFingerTimeline } from "./twoFingerTimeline"
 
 export function useTrackpadTimeline(viewport, options = {}){
   const {
@@ -13,6 +14,9 @@ export function useTrackpadTimeline(viewport, options = {}){
   const lastGestureScaleRef = useRef(1)
   const wheelZoomRemainderRef = useRef(0)
   const pinchZoomRemainderRef = useRef(0)
+  const touchActiveRef = useRef(false)
+  const viewportRef = useRef(viewport)
+  viewportRef.current = viewport
 
   function applyZoomStep(cursorX, direction, viewportWidth){
     const step = 1.025
@@ -48,6 +52,8 @@ export function useTrackpadTimeline(viewport, options = {}){
         viewport.panBy(dx)
       },
       onPinch: ({ event, origin, offset: [distance], first, memo }) => {
+        // Touch owns a continuous, combined pan/zoom path. Avoid double delivery.
+        if(event?.type?.startsWith("touch") || event?.pointerType === "touch") return distance
         // The retained Safari adapter below owns native gesture events.
         if(event?.type?.startsWith("gesture")) return distance
         const rect = ref.current?.getBoundingClientRect()
@@ -82,17 +88,27 @@ export function useTrackpadTimeline(viewport, options = {}){
     }
   )
 
+  useEffect(() => {
+    if (!ref.current) return undefined
+    return attachTwoFingerTimeline(ref.current, {
+      panBy: delta => viewportRef.current.panBy(delta),
+      zoomByScaleFactor: (...args) => viewportRef.current.zoomByScaleFactor(...args)
+    }, { width, minScale, maxScale, onActiveChange: active => { touchActiveRef.current = active } })
+  }, [width, minScale, maxScale])
+
   useEffect(()=>{
     const node = ref.current
     if(!node) return undefined
 
     function onGestureStart(event){
       event.preventDefault()
+      if(touchActiveRef.current) return
       lastGestureScaleRef.current = event.scale || 1
     }
 
     function onGestureChange(event){
       event.preventDefault()
+      if(touchActiveRef.current) return
 
       const rect = node.getBoundingClientRect()
       const viewportWidth = rect.width || width
