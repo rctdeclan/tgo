@@ -1,50 +1,51 @@
-
-export function compose(Base){
-  const partDefs = {}
+export function compose(Base) {
+  const partDefs = []
   let BodyClass = null
   let viewFn = () => null
 
   return {
-    part(name, PartClass){
-      partDefs[name] = PartClass
+    part(name, PartClass) {
+      partDefs.push([name, PartClass])
       return this
     },
-
-    body(Cls){
+    body(Cls) {
       BodyClass = Cls
       return this
     },
-
-    view(fn){
+    view(fn) {
       viewFn = fn
       return this
     },
-
-    build(){
+    build() {
+      const definitions = [...partDefs]
+      const Body = BodyClass
+      const render = viewFn
       return class Composed extends Base {
-        constructor(...args){
+        constructor(...args) {
           super(...args)
-
-          // 1️⃣ instantiate body (pre-parts config)
-          let bodyInstance = null
-          if(BodyClass){
-            bodyInstance = new BodyClass(this)
-            Object.assign(this, bodyInstance)
+          if (Body) {
+            const body = new Body(this)
+            for (const key of Reflect.ownKeys(body)) {
+              const descriptor = Object.getOwnPropertyDescriptor(body, key)
+              if (!('value' in descriptor) || typeof descriptor.value === 'function') {
+                throw new TypeError(`Body own field ${String(key)} must be data; use an ordinary prototype method for orchestration`)
+              }
+              Object.defineProperty(this, key, descriptor)
+            }
+            for (const key of Reflect.ownKeys(Body.prototype)) {
+              if (key === 'constructor') continue
+              Object.defineProperty(this, key, Object.getOwnPropertyDescriptor(Body.prototype, key))
+            }
           }
-
-          // 2️⃣ instantiate parts
           this.parts = {}
-          for(const key in partDefs){
-            this.parts[key] = new partDefs[key](this)
+          for (const [name, Part] of definitions) {
+            this.parts[name] = new Part(this)
           }
-
-          // 3️⃣ optional init phase
-          if(bodyInstance && typeof bodyInstance.init === "function"){
-            bodyInstance.init.call(this)
+          if (Body && typeof Body.prototype.init === 'function') {
+            Body.prototype.init.call(this)
           }
         }
-
-        View = () => viewFn(this.parts, this)
+        View = () => render(this.parts, this)
       }
     }
   }

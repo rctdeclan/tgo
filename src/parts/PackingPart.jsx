@@ -1,6 +1,11 @@
 
 export class PackingPart {
-  constructor(app){ this.app = app }
+
+  layout(alpha){
+    const part = this
+    const gamma = events => alpha(part.pack(events))
+    return gamma
+  }
 
   pack(events){
     const rows=[]

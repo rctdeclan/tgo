@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react"
-import { useViewport } from "../state/viewport"
+import React from "react"
+import { listLabel as labelWithIndicator } from "../domain/labels"
 import bg2 from "../bg2.png"
 
 const BASE_WIDTH = 120
@@ -13,61 +13,17 @@ const LISTS_HEIGHT = 110
 const MAX_ITEMS_PER_COLUMN = 6
 const FRAME_WIDTH = 640
 
-function trimLabel(value) {
-  if (value.length <= 28) return value
-  return `${value.slice(0, 25)}...`
-}
-
-function indicatorForUnit(anchor, unit) {
-  const date = new Date(anchor)
-  if (Number.isNaN(date.getTime())) return ""
-
-  switch (unit) {
-    case "quarter":
-      return date.toLocaleDateString([], { month: "short" })
-    case "fortnight":
-      return date.toLocaleDateString([], { month: "short", day: "numeric" })
-    case "week":
-      return date.toLocaleDateString([], { weekday: "long" })
-    case "month":
-      return `Week ${Math.floor((date.getDate() - 1) / 7) + 1}`
-    case "year":
-      return date.toLocaleDateString([], { month: "short" })
-    case "fourHour":
-      return date.toLocaleTimeString([], { hour: "numeric", hour12: true })
-    case "day":
-      return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
-    case "hour":
-      return date.toLocaleTimeString([], { minute: "2-digit" })
-    case "fifteenMinute":
-      return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
-    default:
-      return date.toLocaleDateString([], { day: "numeric" })
-  }
-}
-
-function labelWithIndicator(item, unit) {
-  const indicator = indicatorForUnit(item.anchor, unit)
-  if (!indicator) return trimLabel(item.title)
-  return trimLabel(`${indicator} · ${item.title}`)
-}
-
 export class ListsPart {
-  constructor(app) {
-    this.app = app
+  present(alpha) {
+    const gamma = (viewport, layout) => alpha({
+      viewport,
+      rowCount: layout.rowCount,
+      listItems: layout.listItems
+    })
+    return gamma
   }
 
-  Background = () => {
-    const vp = useViewport(this.app.viewportConfig)
-    const [, setRevision] = useState(0)
-
-    useEffect(() => this.app.parts.strokes.subscribe(() => {
-      setRevision(value => value + 1)
-    }), [])
-
-    const { rowCount } =
-      this.app.parts.strokes.getLayout(vp.unit, vp.worldOriginTime)
-
+  Background = ({ viewport: vp, rowCount }) => {
     const listTop = STROKES_Y + rowCount * ROW_HEIGHT + LISTS_GAP
 
     return (
@@ -82,21 +38,11 @@ export class ListsPart {
     )
   }
 
-  Content = () => {
-    const vp = useViewport(this.app.viewportConfig)
-    const [, setRevision] = useState(0)
-
-    useEffect(() => this.app.parts.strokes.subscribe(() => {
-      setRevision(value => value + 1)
-    }), [])
-
+  Content = ({ viewport: vp, rowCount, listItems }) => {
     const cellWidth = BASE_WIDTH * vp.zoom
-    const half = Math.floor(VISIBLE / 2)
-    const worldWidth = cellWidth * VISIBLE
+    const half = Math.floor((vp.visibleCells ?? VISIBLE) / 2)
+    const worldWidth = cellWidth * (vp.visibleCells ?? VISIBLE)
     const worldLeft = -half * cellWidth
-
-    const { rowCount, listItems } =
-      this.app.parts.strokes.getLayout(vp.unit, vp.worldOriginTime)
 
     const listTop = STROKES_Y + rowCount * ROW_HEIGHT + LISTS_GAP
     const columns = new Map()
@@ -111,7 +57,7 @@ export class ListsPart {
 
     return (
       <svg x={worldLeft} y={listTop} width={worldWidth} height={LISTS_HEIGHT}>
-        {Array.from({ length: VISIBLE }).map((_, idx) => {
+        {Array.from({ length: vp.visibleCells ?? VISIBLE }).map((_, idx) => {
           const i = idx - half
           const x = idx * cellWidth
           const items = columns.get(i) || []
@@ -146,10 +92,10 @@ export class ListsPart {
     )
   }
 
-  View = () => (
+  View = props => (
     <>
-      <this.Background />
-      <this.Content />
+      <this.Background {...props} />
+      <this.Content {...props} />
     </>
   )
 }

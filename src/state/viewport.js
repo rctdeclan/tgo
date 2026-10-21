@@ -1,242 +1,94 @@
+import { UNIT_ORDER, cellAt, coordinate, instantAt } from "../domain/calendar"
 
-import { useEffect, useState } from "react"
-import { UNIT_ORDER, UNIT_MS, UNIT_TERM_SPAN } from "../domain/time"
-
-const DEFAULT_WIDTH = 1280
+const WIDTH = 640
 const BASE_WIDTH = 120
+const DEFAULT_UPPER = WIDTH / (3 * BASE_WIDTH)
+const clampIndex = index => Math.max(0, Math.min(Math.trunc(index), UNIT_ORDER.length - 1))
 
-let state = {
-  unitIndex: 2,
-  zoom: 1,
-  worldOffsetPx: 0,
-  worldOriginTime: Date.now()
+// A local scale estimate for level changes, not a fixed calendar-unit ratio.
+export function unitRatio(finer, coarser, instant) {
+  const cell = cellAt(instant, coarser)
+  return coordinate(cell.end, finer) - coordinate(cell.start, finer)
 }
 
-let listeners = []
+export function createViewport(config = {}) {
+  let state = { unitIndex: 2, zoom: 1, worldOffsetPx: 0, worldOriginTime: cellAt(Date.now(), UNIT_ORDER[2]).start }
+  const unit = () => UNIT_ORDER[state.unitIndex]
+  const upper = bounds => Math.min(bounds?.maxScale ?? config.zoomUpper ?? DEFAULT_UPPER, DEFAULT_UPPER)
+  const clampZoom = (zoom, index, bounds) => index === UNIT_ORDER.length - 1
+    ? Math.max(bounds?.minScale ?? config.zoomLower ?? 0.5, Math.min(upper(bounds), zoom))
+    : Math.min(upper(bounds), zoom)
 
-function normalizePan(nextState){
-  const unit = UNIT_ORDER[nextState.unitIndex]
-  const unitMs = UNIT_MS[unit]
-  if(!unitMs) return nextState
-
-  const cellWidth = BASE_WIDTH * nextState.zoom
-  if(!Number.isFinite(cellWidth) || cellWidth <= 0) return nextState
-
-  const shiftedCells = Math.trunc(nextState.worldOffsetPx / cellWidth)
-  if(shiftedCells === 0) return nextState
-
-  return {
-    ...nextState,
-    worldOffsetPx: nextState.worldOffsetPx - shiftedCells * cellWidth,
-    worldOriginTime: nextState.worldOriginTime - shiftedCells * unitMs
-  }
-}
-
-function setState(p){
-  state = normalizePan({...state, ...p})
-  listeners.forEach(l => l(state))
-}
-
-function zoomForUnitTransition(startUnitIndex, targetUnitIndex, startZoom){
-  let zoom = startZoom
-  let unitIndex = startUnitIndex
-
-  while(unitIndex > targetUnitIndex){
-    const finerUnit = UNIT_ORDER[unitIndex - 1]
-    const finerSpan = UNIT_TERM_SPAN[finerUnit] || 1
-    zoom = zoom / finerSpan
-    unitIndex--
-  }
-
-  while(unitIndex < targetUnitIndex){
-    const currentUnit = UNIT_ORDER[unitIndex]
-    const currentTermSpan = UNIT_TERM_SPAN[currentUnit] || 1
-    zoom = zoom * currentTermSpan
-    unitIndex++
-  }
-
-  return zoom
-}
-
-function getCenterTime(snapshot){
-  const unit = UNIT_ORDER[snapshot.unitIndex]
-  const unitMs = UNIT_MS[unit]
-  const cellWidth = BASE_WIDTH * snapshot.zoom
-
-  if(!unitMs || !Number.isFinite(cellWidth) || cellWidth <= 0){
-    return snapshot.worldOriginTime
-  }
-
-  return snapshot.worldOriginTime - (snapshot.worldOffsetPx / cellWidth) * unitMs
-}
-
-function getCellWidth(snapshot){
-  const cellWidth = BASE_WIDTH * snapshot.zoom
-  if(!Number.isFinite(cellWidth) || cellWidth <= 0) return BASE_WIDTH
-  return cellWidth
-}
-
-function snapTimeToUnit(time, unitMs){
-  if(!Number.isFinite(time) || !Number.isFinite(unitMs) || unitMs <= 0){
-    return time
-  }
-
-  return Math.floor(time / unitMs) * unitMs
-}
-
-function getZoomUpper(config, bounds = {}){
-  return bounds.maxScale ?? config?.zoomUpper ?? 2
-}
-
-function getAbsoluteZoomLower(config, bounds = {}){
-  return bounds.minScale ?? config?.zoomLower ?? 0.5
-}
-
-function getZoomOutThreshold(unitIndex, config, bounds = {}){
-  const currentUnit = UNIT_ORDER[unitIndex]
-  const currentTermSpan = UNIT_TERM_SPAN[currentUnit] || 1
-  const upper = getZoomUpper(config, bounds)
-  return upper / currentTermSpan
-}
-
-function clampZoomForUnit(zoom, unitIndex, config, bounds = {}){
-  const upper = getZoomUpper(config, bounds)
-  const cappedUpper = Math.min(upper, zoom)
-
-  if(unitIndex === UNIT_ORDER.length - 1){
-    return Math.max(getAbsoluteZoomLower(config, bounds), cappedUpper)
-  }
-
-  return cappedUpper
-}
-
-function getReadableStepZoom(unitIndex, config, bounds = {}){
-  return clampZoomForUnit(getZoomUpper(config, bounds), unitIndex, config, bounds)
-}
-
-export function useViewport(config){
-  const [local,setLocal] = useState(state)
-
-  useEffect(()=>{
-    listeners.push(setLocal)
-    return ()=> listeners = listeners.filter(l=>l!==setLocal)
-  },[])
-
-  function applySnap(mouseX,newZoom,newUnitIndex,viewportWidth){
-    const unit = UNIT_ORDER[state.unitIndex]
-    if(!unit) return
-
-    const unitMs = UNIT_MS[unit]
+  function setState(next) {
+    state = { ...state, ...next }
     const cellWidth = BASE_WIDTH * state.zoom
-    const width = viewportWidth || DEFAULT_WIDTH
-
-    const worldX = (mouseX - width/2 - state.worldOffsetPx) / cellWidth
-    const worldTime = state.worldOriginTime + worldX * unitMs
-
-    const newUnit = UNIT_ORDER[newUnitIndex]
-    if(!newUnit) return
-
-    const newUnitMs = UNIT_MS[newUnit]
-    const newCellWidth = BASE_WIDTH * newZoom
-    const newOriginTime = newUnitIndex === state.unitIndex
-      ? state.worldOriginTime
-      : snapTimeToUnit(state.worldOriginTime, newUnitMs)
-    const newWorldX = (worldTime - newOriginTime) / newUnitMs
-    const newOffset = mouseX - width/2 - newWorldX * newCellWidth
-
-    setState({
-      zoom:newZoom,
-      unitIndex:newUnitIndex,
-      worldOriginTime:newOriginTime,
-      worldOffsetPx:newOffset
-    })
+    const shift = Math.trunc(state.worldOffsetPx / cellWidth)
+    if (shift) {
+      state.worldOriginTime = instantAt(coordinate(state.worldOriginTime, unit()) - shift, unit())
+      state.worldOffsetPx -= shift * cellWidth
+    }
   }
-
-  function zoomByScaleFactor(mouseX,scaleFactor,viewportWidth,bounds = {}){
-    if(!Number.isFinite(scaleFactor) || scaleFactor <= 0) return
-
-    let newZoom = state.zoom * scaleFactor
-    let newUnitIndex = state.unitIndex
-    const upper = getZoomUpper(config, bounds)
-    const isZoomingIn = scaleFactor > 1
-
-    if(isZoomingIn){
-      while(newZoom > upper && newUnitIndex > 0){
-        newZoom = zoomForUnitTransition(newUnitIndex, newUnitIndex - 1, newZoom)
-        newUnitIndex--
+  function timeAt(x = WIDTH / 2, width = WIDTH) {
+    return instantAt(coordinate(state.worldOriginTime, unit()) + (x - width / 2 - state.worldOffsetPx) / (BASE_WIDTH * state.zoom), unit())
+  }
+  function anchorAt(instant, x, zoom, index, width = WIDTH) {
+    const target = UNIT_ORDER[index]
+    const origin = cellAt(state.worldOriginTime, target).start
+    const offset = x - width / 2 - (coordinate(instant, target) - coordinate(origin, target)) * BASE_WIDTH * zoom
+    setState({ unitIndex: index, zoom, worldOriginTime: origin, worldOffsetPx: offset })
+  }
+  function zoomByScaleFactor(x, factor, width = WIDTH, bounds = {}) {
+    if (!Number.isFinite(factor) || factor <= 0) return
+    const instant = timeAt(x, width)
+    let zoom = state.zoom * factor
+    let index = state.unitIndex
+    if (factor > 1) {
+      while (zoom > upper(bounds) && index > 0) {
+        zoom /= unitRatio(UNIT_ORDER[index - 1], UNIT_ORDER[index], instant)
+        index--
       }
     } else {
-      while(
-        newUnitIndex < UNIT_ORDER.length-1 &&
-        newZoom < getZoomOutThreshold(newUnitIndex, config, bounds)
-      ){
-        newZoom = zoomForUnitTransition(newUnitIndex, newUnitIndex + 1, newZoom)
-        newUnitIndex++
+      while (index < UNIT_ORDER.length - 1) {
+        const ratio = unitRatio(UNIT_ORDER[index], UNIT_ORDER[index + 1], instant)
+        if (zoom >= upper(bounds) / ratio) break
+        zoom *= ratio
+        index++
       }
     }
-
-    newZoom = clampZoomForUnit(newZoom, newUnitIndex, config, bounds)
-
-    applySnap(mouseX,newZoom,newUnitIndex,viewportWidth)
+    anchorAt(instant, x, clampZoom(zoom, index, bounds), index, width)
   }
-
-  function panBy(deltaX){
-    setState({ worldOffsetPx: state.worldOffsetPx - deltaX })
+  function panBy(delta) {
+    if (Number.isFinite(delta)) setState({ worldOffsetPx: state.worldOffsetPx - delta })
   }
-
-  function panUnits(deltaUnits){
-    if(!Number.isFinite(deltaUnits) || deltaUnits === 0) return
-    panBy(deltaUnits * getCellWidth(state))
+  function panUnits(amount) { panBy(amount * BASE_WIDTH * state.zoom) }
+  function jumpTo(index, instant) {
+    if (!Number.isFinite(index)) return
+    index = clampIndex(index)
+    let zoom = state.zoom
+    for (let i = state.unitIndex; i > index; i--) zoom /= unitRatio(UNIT_ORDER[i - 1], UNIT_ORDER[i], instant)
+    for (let i = state.unitIndex; i < index; i++) zoom *= unitRatio(UNIT_ORDER[i], UNIT_ORDER[i + 1], instant)
+    anchorAt(instant, WIDTH / 2, clampZoom(zoom, index), index)
   }
-
-  function jumpTo(unitIndex,time){
-    const clamped = Math.max(0, Math.min(unitIndex, UNIT_ORDER.length-1))
-    setState({
-      unitIndex: clamped,
-      worldOriginTime: time,
-      zoom: clampZoomForUnit(
-        zoomForUnitTransition(state.unitIndex, clamped, state.zoom),
-        clamped,
-        config
-      ),
-      worldOffsetPx:0
-    })
+  function stepUnit(delta, { readable = false } = {}) {
+    if (!Number.isFinite(delta)) return
+    const index = clampIndex(state.unitIndex + delta)
+    if (index === state.unitIndex) return
+    const instant = timeAt()
+    if (readable) anchorAt(instant, WIDTH / 2, clampZoom(upper(), index), index)
+    else jumpTo(index, instant)
   }
-
-  function stepUnit(delta, options = {}){
-    if(!Number.isFinite(delta) || delta === 0) return
-
-    const targetUnitIndex = Math.max(
-      0,
-      Math.min(state.unitIndex + delta, UNIT_ORDER.length - 1)
-    )
-
-    if(targetUnitIndex === state.unitIndex) return
-
-    const centerTime = getCenterTime(state)
-
-    if(options.readable){
-      setState({
-        unitIndex: targetUnitIndex,
-        worldOriginTime: centerTime,
-        zoom: getReadableStepZoom(targetUnitIndex, config),
-        worldOffsetPx:0
-      })
-      return
-    }
-
-    jumpTo(targetUnitIndex, centerTime)
+  function stepScale(delta) {
+    const index = clampIndex(state.unitIndex + delta)
+    if (index === state.unitIndex) return null
+    return delta < 0
+      ? 1 / unitRatio(UNIT_ORDER[index], unit(), timeAt())
+      : unitRatio(unit(), UNIT_ORDER[index], timeAt())
   }
-
-  const unit = UNIT_ORDER[local.unitIndex]
-
-return {
-  ...local,
-  unit,
-  panBy,
-  panUnits,
-  zoomByScaleFactor,
-  jumpTo,
-  stepUnit
-}
+  return {
+    getSnapshot() {
+      const visibleHalf = Math.max(20, Math.ceil((WIDTH / 2 + Math.abs(state.worldOffsetPx)) / (BASE_WIDTH * state.zoom)) + 2)
+      return { ...state, unit: unit(), visibleCells: 2 * visibleHalf }
+    },
+    panBy, panUnits, zoomByScaleFactor, jumpTo, stepUnit, stepScale
+  }
 }

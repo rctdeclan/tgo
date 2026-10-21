@@ -1,8 +1,7 @@
 
-import React, { useEffect, useRef, useState } from "react"
-import { useViewport } from "../state/viewport"
-import { project } from "../domain/projection"
-import { UNIT_MS } from "../domain/time"
+import React, { useRef, useState } from "react"
+import { project, isListEvent } from "../domain/projection"
+import { UNIT_ORDER, cellAt, nextCell, eventInterval } from "../domain/calendar"
 import bg from "../bg.png"
 
 const BASE_WIDTH=120
@@ -16,10 +15,54 @@ const LISTS_GAP=8
 const FRAME_WIDTH=640
 
 export class StrokesPart {
-  constructor(app){
-    this.app = app
+  constructor(){
     this.events = []
     this.listeners = []
+  }
+
+  insert(alpha) {
+    const part = this
+    const gamma = event => {
+      part.addEvent(event)
+      const stored = part.events[part.events.length - 1]
+      alpha(stored)
+      return stored
+    }
+    return gamma
+  }
+
+  observe(alpha) {
+    const part = this
+    const gamma = () => alpha(part.events)
+    // The observer belongs to this Part's lifetime, not to a mounted View.
+    part.subscribe(gamma)
+    return gamma
+  }
+
+  create(alpha) {
+    const gamma = (draft, viewport) => {
+      const title = draft.title.trim()
+      if (!title) return
+      const event = {
+        id: globalThis.crypto?.randomUUID?.() || `event-${Date.now()}`,
+        title,
+        positionsByUnit: { [viewport.unit]: draft.row },
+        term: {
+          anchor: nextCell(cellAt(viewport.worldOriginTime, viewport.unit), draft.start).start,
+          definedUnit: viewport.unit,
+          amount: 1
+        }
+      }
+      alpha(event)
+      return event
+    }
+    return gamma
+  }
+
+  layout(alpha) {
+    const part = this
+    const gamma = viewport => alpha(part.getLayout(viewport.unit, viewport.worldOriginTime))
+    return gamma
   }
 
   colorForIndex(index){
@@ -28,6 +71,7 @@ export class StrokesPart {
   }
 
   addEvent(e){
+    eventInterval(e.term)
     this.events.push({
       ...e,
       positionsByUnit: { ...(e.positionsByUnit || {}) },
@@ -75,8 +119,7 @@ export class StrokesPart {
   }
 
   getLayout(unit, worldOriginTime){
-    const unitMs = UNIT_MS[unit]
-    if(!unitMs){
+    if(!UNIT_ORDER.includes(unit)){
       return { packed: [], rowCount: MIN_GRID_ROWS, listItems: [] }
     }
 
@@ -84,17 +127,12 @@ export class StrokesPart {
     const listItems = []
 
     this.events.forEach(e=>{
-      const baseMs = UNIT_MS[e.term.definedUnit]
-      if(!baseMs) return
-
-      const rawSpan = (baseMs * e.term.amount) / unitMs
-      const start = Math.floor((e.term.anchor - worldOriginTime) / unitMs)
-
-      if(rawSpan < 1){
+      const projection = project(e.term, unit, worldOriginTime)
+      if(isListEvent(e.term.definedUnit, unit)){
         listItems.push({
           id: e.id,
           title: e.title,
-          start,
+          start: projection.start,
           anchor: e.term.anchor
         })
         return
@@ -102,7 +140,7 @@ export class StrokesPart {
 
       visible.push({
         ...e,
-        ...project(e.term, unit, worldOriginTime)
+        ...projection
       })
     })
 
@@ -115,13 +153,7 @@ export class StrokesPart {
     return { packed, rowCount, listItems }
   }
 
-  Background = () => {
-    const vp = useViewport(this.app.viewportConfig)
-    const [, setRevision] = useState(0)
-
-    useEffect(() => this.subscribe(() => setRevision(value => value + 1)), [])
-
-    const { rowCount } = this.getLayout(vp.unit, vp.worldOriginTime)
+  Background = ({ viewport: vp, layout: { rowCount } }) => {
     const timelineHeight = STROKES_Y + rowCount*ROW_HEIGHT + LISTS_GAP
 
     return (
@@ -136,21 +168,17 @@ export class StrokesPart {
     )
   }
 
-  Content = () => {
-    const vp = useViewport(this.app.viewportConfig)
-    const [, setRevision] = useState(0)
+  Content = ({ viewport: vp, layout: { packed, rowCount }, onCreate }) => {
     const [hoveredCellKey, setHoveredCellKey] = useState(null)
     const [draft, setDraft] = useState(null)
     const handledDraftKeyRef = useRef(null)
 
-    useEffect(() => this.subscribe(() => setRevision(value => value + 1)), [])
 
     const cellWidth = BASE_WIDTH * vp.zoom
-    const half = Math.floor(VISIBLE/2)
-    const worldWidth = cellWidth * VISIBLE
+    const half = Math.floor((vp.visibleCells ?? VISIBLE)/2)
+    const worldWidth = cellWidth * (vp.visibleCells ?? VISIBLE)
     const worldLeft = -half * cellWidth
 
-    const { packed, rowCount } = this.getLayout(vp.unit, vp.worldOriginTime)
     const cellBodyWidth = Math.max(1, cellWidth - GAP)
     const inputWidth = Math.max(120, cellBodyWidth)
 
@@ -185,21 +213,7 @@ export class StrokesPart {
         return
       }
 
-      const unitMs = UNIT_MS[vp.unit]
-      const anchor = vp.worldOriginTime + draft.start * unitMs
-
-      this.addEvent({
-        id: globalThis.crypto?.randomUUID?.() || `event-${Date.now()}`,
-        title,
-        positionsByUnit: {
-          [vp.unit]: draft.row
-        },
-        term: {
-          anchor,
-          definedUnit: vp.unit,
-          amount: 1
-        }
-      })
+      onCreate({ title, row: draft.row, start: draft.start })
 
       setDraft(null)
     }
@@ -214,7 +228,7 @@ export class StrokesPart {
             width={worldWidth}
             height={CELL_HEIGHT}
           >
-            {Array.from({length:VISIBLE}).map((__,idx)=>{
+            {Array.from({length:vp.visibleCells ?? VISIBLE}).map((__,idx)=>{
               const x = idx*cellWidth
               const cellKey = `${row}-${idx}`
               const isHovered = hoveredCellKey === cellKey
@@ -342,7 +356,7 @@ export class StrokesPart {
                 />
 
                 {/* checkbox */}
-                <path d="M18 0L0 0L0 18L18 18L18 0ZM15 15L3 15L3 3L15 3L15 15Z" fill={e.color} fill-rule="nonzero" opacity="1" stroke="none" transform={`translate(${frameInset + 5},${frameInset + 6})`}/>
+                <path d="M18 0L0 0L0 18L18 18L18 0ZM15 15L3 15L3 3L15 3L15 15Z" fill={e.color} fillRule="nonzero" opacity="1" stroke="none" transform={`translate(${frameInset + 5},${frameInset + 6})`}/>
 
 
 
@@ -364,10 +378,10 @@ export class StrokesPart {
     )
   }
 
-  View = () => (
+  View = props => (
     <>
-      <this.Background />
-      <this.Content />
+      <this.Background {...props} />
+      <this.Content {...props} />
     </>
   )
 }

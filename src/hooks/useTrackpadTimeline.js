@@ -3,7 +3,7 @@ import { useGesture } from "@use-gesture/react"
 
 export function useTrackpadTimeline(viewport, options = {}){
   const {
-    width = 1280,
+    width = 640,
     minScale = 0.5,
     maxScale = 10,
     zoomSensitivity = 0.00035
@@ -23,7 +23,7 @@ export function useTrackpadTimeline(viewport, options = {}){
     })
   }
 
-  const bind = useGesture(
+  useGesture(
     {
       onWheel: ({ event, delta: [dx, dy], ctrlKey }) => {
         event.preventDefault()
@@ -47,7 +47,9 @@ export function useTrackpadTimeline(viewport, options = {}){
         wheelZoomRemainderRef.current = 0
         viewport.panBy(dx)
       },
-      onPinch: ({ origin, offset: [distance], first, memo }) => {
+      onPinch: ({ event, origin, offset: [distance], first, memo }) => {
+        // The retained Safari adapter below owns native gesture events.
+        if(event?.type?.startsWith("gesture")) return distance
         const rect = ref.current?.getBoundingClientRect()
         const viewportWidth = rect?.width || width
         const cursorX = rect ? origin[0] - rect.left : viewportWidth / 2
@@ -74,6 +76,8 @@ export function useTrackpadTimeline(viewport, options = {}){
       }
     },
     {
+      target: ref,
+      pinch: { pinchOnWheel: false },
       eventOptions: { passive: false }
     }
   )
@@ -133,8 +137,7 @@ export function useTrackpadTimeline(viewport, options = {}){
 
   return {
     bind: {
-      ref,
-      ...bind()
+      ref
     }
   }
 }

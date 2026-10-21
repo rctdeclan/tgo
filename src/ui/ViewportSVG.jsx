@@ -1,8 +1,6 @@
 
 import React, { useEffect, useRef, useState } from "react"
-import { UNIT_ORDER, UNIT_TERM_SPAN } from "../domain/time"
 import { useTrackpadTimeline } from "../hooks/useTrackpadTimeline"
-import { useViewport } from "../state/viewport"
 
 const WIDTH=640
 const HEIGHT=520
@@ -10,30 +8,7 @@ const DISSOLVE_MS = 180
 const KEYBOARD_MOTION_MS = 180
 const BASE_CELL_WIDTH = 120
 
-function getZoomUpper(config){
-  return config?.zoomUpper ?? 2
-}
-
-function getAbsoluteZoomLower(config){
-  return config?.zoomLower ?? 0.5
-}
-
-function clampZoomForUnit(zoom, unitIndex, config){
-  const cappedUpper = Math.min(getZoomUpper(config), zoom)
-
-  if(unitIndex === UNIT_ORDER.length - 1){
-    return Math.max(getAbsoluteZoomLower(config), cappedUpper)
-  }
-
-  return cappedUpper
-}
-
-function getReadableStepZoom(unitIndex, config){
-  return clampZoomForUnit(getZoomUpper(config), unitIndex, config)
-}
-
-export function ViewportSVG({children, stationaryChildren, config}){
-  const vp = useViewport(config)
+export function ViewportSVG({children, stationaryChildren, config, viewport: vp, getStepZoomScale}){
   const [isDissolving,setIsDissolving] = useState(false)
   const [keyboardPanOffsetPx,setKeyboardPanOffsetPx] = useState(0)
   const [keyboardZoomScale,setKeyboardZoomScale] = useState(1)
@@ -83,21 +58,6 @@ export function ViewportSVG({children, stationaryChildren, config}){
     vp.panUnits(deltaUnits)
 
     keyboardTransformFrameRef.current = window.requestAnimationFrame(finishKeyboardTransformAnimation)
-  }
-
-  function getStepZoomScale(delta){
-    const targetUnitIndex = Math.max(0, Math.min(vp.unitIndex + delta, UNIT_ORDER.length - 1))
-    if(targetUnitIndex === vp.unitIndex) return null
-
-    if(delta < 0){
-      const finerUnit = UNIT_ORDER[vp.unitIndex - 1]
-      const finerSpan = UNIT_TERM_SPAN[finerUnit] || 1
-      return 1 / finerSpan
-    }
-
-    const currentUnit = UNIT_ORDER[vp.unitIndex]
-    const currentTermSpan = UNIT_TERM_SPAN[currentUnit] || 1
-    return currentTermSpan
   }
 
   function startKeyboardZoomAnimation(delta){
