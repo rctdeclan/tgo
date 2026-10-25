@@ -1,9 +1,9 @@
 
 import React from "react"
 import ReactDOM from "react-dom/client"
-import { App } from "./App"
+import { ExperimentApp } from "./experiment/ExperimentApp"
 
-const app = new App()
+const app = new ExperimentApp()
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <app.View />

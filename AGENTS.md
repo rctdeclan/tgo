@@ -1,5 +1,9 @@
 # TGO / Replanner Agent Instructions
 
+## Temporary branch authority
+
+On `temporary/collapsible-header`, the user explicitly authorizes a reference-image schedule experiment: a dark table/blue backdrop, pinned event names, one row per item, expandable week/day/hour leaf headers and automatic unfolding on horizontal scroll. These branch-only requirements supersede the original fixed 640px/three-header/list/packing presentation rules below. Preserve Cookbook and the shared Temporal engine. Original App and main remain intact. Read docs/HEADER_STUDY.md for behavior, limits and the separate Sites identity; do not overwrite the main Site.
+
 ## Authority and scope
 
 The corrected full Temporal request and subsequent user replies define current calendar scope. P2-P3 Cookbook and P4/P5 Temporal integration are implemented and ready for review. The Cloud initialization task was documentation-only. The subsequent user request authorizes iPad two-finger pan/zoom and Sites deployment; keep changes within that scope. The repository is now published at https://github.com/rctdeclan/tgo; main tracks origin/main. Earlier authorization covers a verified handoff commit/push. Future commits/pushes require task authorization. Only the main replanner project is in scope; do not audit/edit sibling archives or revert unrelated changes.
