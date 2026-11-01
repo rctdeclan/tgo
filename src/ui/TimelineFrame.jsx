@@ -3,7 +3,7 @@ import { SCENE_WIDTH, SCENE_HEIGHT, phoneContentHeight } from './frameGeometry'
 import { LandscapeTools } from './LandscapeTools'
 
 const PHONE_QUERY = '(max-width: 639px), (max-width: 960px) and (max-height: 500px) and (pointer: coarse)'
-const UNIT_LABELS = { minute: 'Minutes', fifteenMinute: '15 minutes', hour: 'Hours', fourHour: '4 hours', day: 'Days', week: 'Weeks', fortnight: 'Fortnights', month: 'Months', quarter: 'Quarters', year: 'Years' }
+const UNIT_LABELS = { minute: 'Minutes', fifteenMinute: '15 minutes', hour: 'Hours', dayPart: 'Day parts', day: 'Days', week: 'Weeks', fortnight: 'Fortnights', month: 'Months', quarter: 'Quarters', year: 'Years' }
 
 export function TimelineFrame({ viewport, rowCount, onNavigate, children }) {
   const host = useRef(null)

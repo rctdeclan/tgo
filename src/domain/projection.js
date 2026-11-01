@@ -1,8 +1,8 @@
 import { UNIT_ORDER, cellAt, eventInterval } from "./calendar"
 
 export function isListEvent(definedUnit, displayedUnit) {
-  const source = UNIT_ORDER.indexOf(definedUnit)
-  const target = UNIT_ORDER.indexOf(displayedUnit)
+  const source = UNIT_ORDER.indexOf(definedUnit === 'fourHour' ? 'dayPart' : definedUnit)
+  const target = UNIT_ORDER.indexOf(displayedUnit === 'fourHour' ? 'dayPart' : displayedUnit)
   if (source < 0 || target < 0) throw new RangeError("Unknown event/display unit")
   return source < target
 }

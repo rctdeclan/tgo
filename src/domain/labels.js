@@ -1,4 +1,4 @@
-import { zoned, TIME_ZONE } from "./calendar"
+import { zoned, TIME_ZONE, cellAt, nextCell, dayPartWindow } from "./calendar"
 
 // Reuse Intl formatters; constructing one per visible label stalls touch frames.
 const formatters = new Map()
@@ -16,9 +16,10 @@ export function headerLabel(instant, unit) {
     case "year": return String(date.year)
     case "quarter": return `Q${Math.ceil(date.month / 3)} ${date.year}`
     case "month": return format(date, { month: "long" })
-    case "fortnight": return format(date, { month: "short", day: "numeric" })
+    case "fortnight": return `Fortnight ${fortnightNumber(instant)}`
     case "week": return `Week ${date.weekOfYear}`
     case "day": return format(date, { weekday: "short", day: "numeric" })
+    case "dayPart": return dayPartWindow(instant).label
     default: {
       const label = format(date, { hour: "numeric", ...(unit === "minute" || unit === "fifteenMinute" ? { minute: "2-digit" } : {}), hour12: true })
       const local = date.toPlainDateTime()
@@ -26,6 +27,15 @@ export function headerLabel(instant, unit) {
       return repeated && unit !== "fourHour" ? `${label} ${date.offset}` : label
     }
   }
+}
+
+// Keep the stable fortnight grid; reset labels at the first start in each year.
+export function fortnightNumber(instant) {
+  const cell = cellAt(instant, 'fortnight')
+  const yearStart = zoned(cell.start).toPlainDate().with({ month: 1, day: 1 }).toZonedDateTime(TIME_ZONE).epochMilliseconds
+  let first = cellAt(yearStart, 'fortnight')
+  if (first.start < yearStart) first = nextCell(first)
+  return cell.index - first.index + 1
 }
 
 export function listLabel(item, unit) {
@@ -36,10 +46,9 @@ export function listLabel(item, unit) {
     case "fortnight": indicator = format(date, { month: "short", day: "numeric" }); break
     case "week": indicator = format(date, { weekday: "long" }); break
     case "month": indicator = `Week ${Math.floor((date.day - 1) / 7) + 1}`; break
-    case "fourHour": indicator = format(date, { hour: "numeric", hour12: true }); break
+    case "dayPart": case "fourHour": indicator = format(date, { hour: "numeric", hour12: true }); break
     case "hour": indicator = format(date, { minute: "2-digit" }); break
     default: indicator = format(date, { hour: "numeric", minute: "2-digit" })
   }
-  const label = `${indicator} · ${item.title}`
-  return label.length <= 28 ? label : `${label.slice(0, 25)}...`
+  return `${indicator} · ${item.title}`
 }

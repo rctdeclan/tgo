@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { UNIT_ORDER, cellAt, nextCell, coordinate, instantAt } from "../domain/calendar"
+import { UNIT_ORDER, cellAt, nextCell, coordinate, instantAt, dayPartWindow, zoned, TIME_ZONE } from "../domain/calendar"
 import { headerLabel } from "../domain/labels"
 
 const BASE_WIDTH = 120
@@ -44,12 +44,16 @@ export class HeaderPart {
         .map((index, rowOrder) => {
           const unit = UNIT_ORDER[index]
           const groups = []
-          for (let cell = cellAt(left, unit); cell.start < right; cell = nextCell(cell)) {
+          const first = cellAt(left, unit)
+          for (let cell = unit === 'dayPart' ? nextCell(first, -1) : first; cell.start < right; cell = nextCell(cell)) {
+            const range = unit === 'dayPart' ? dayPartWindow(cell) : cell
+            if (range.end <= left) continue
             const key = `${viewport.unit}:${unit}:${cell.start}`
             let group = geometry.get(key)
             if (!group) {
-              group = { start: coordinate(cell.start, viewport.unit), end: coordinate(cell.end, viewport.unit),
-                label: headerLabel(cell.start, unit) }
+              group = { start: coordinate(cell.start, viewport.unit), end: coordinate(range.end, viewport.unit),
+                label: headerLabel(cell.start, unit),
+                title: unit === 'dayPart' ? `${range.label} · ${zoned(range.start).toPlainDateTime().toString({ smallestUnit: 'minute' })} — ${zoned(range.end).toPlainDateTime().toString({ smallestUnit: 'minute' })} (${TIME_ZONE})` : undefined }
               geometry.set(key, group)
               if (geometry.size > 512) geometry.delete(geometry.keys().next().value)
             }
@@ -57,9 +61,11 @@ export class HeaderPart {
               startI: group.start - origin,
               endI: group.end - origin - 1,
               startTime: cell.start,
-              endTime: cell.end,
+              endTime: range.end,
+              overlapsNext: range.overlapsNext,
               label: group.label,
-              isCurrent: now >= cell.start && now < cell.end
+              title: group.title,
+              isCurrent: now >= cell.start && now < range.end
             })
           }
           return { unitIndex: index, unit, y: ROW_Y[rowOrder], groups,
@@ -190,12 +196,14 @@ export class HeaderPart {
                     onMouseLeave={() => setHoveredGroupKey(null)}
                     style={{ cursor: onClick ? "pointer" : "default" }}
                   >
+                    <title>{group.title || group.label}</title>
                     <rect
                       x={startX + GAP / 2}
                       y={0}
-                      width={spanWidth - GAP}
+                      width={Math.max(1, spanWidth - GAP)}
                       height={ROW_HEIGHT}
                       fill={cellFill}
+                      fillOpacity={row.unit === 'dayPart' ? 0.8 : 1}
                     />
                     <rect
                       x={startX + spanWidth - GAP / 2}
@@ -208,7 +216,7 @@ export class HeaderPart {
                     <rect
                       x={startX + GAP / 2 + 4}
                       y={9}
-                      width={spanWidth - GAP - 8}
+                      width={Math.max(0, spanWidth - GAP - 8)}
                       height={2}
                       fill={lineFill}
                     />

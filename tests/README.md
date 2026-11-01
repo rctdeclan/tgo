@@ -24,3 +24,5 @@ Responsiveness follow-up: 57 tests. navigation-performance.test.js validates ato
 iPhone preparation on main: 62 tests (57 existing + 5 in phone-frame.test.js), covering physical/scene input mapping, resize anchors/readability, content height, toolbar dispatch and native vertical wheel allowance. See ../docs/IPHONE_PREPARATION.md for mobile browser coverage and remaining physical Safari checks.
 
 Landscape sidebars: 64 tests. landscape-clipboard.test.js checks explicit clipboard access, buffer copy/clear behavior without OS clipboard erasure, and denied-access manual fallback. Orientation, black rail styling, 44px hit targets, reserved calendar space and portrait preservation are verified in browser QA.
+
+Day parts/clipping: 70 tests. day-parts.test.js covers five approved windows, true cross-midnight overlap, DST, stable ownership/inverse coordinates, native event endpoints and simultaneous header highlights. fortnight-labels.test.js checks annual start numbering/reset. Browser checks validate actual long-title clipping, the uploaded stroke background, day-part names and Fortnight labels. See ../docs/DAY_PARTS_AND_LABELS.md.

@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createSourceLoader } from './helpers/load-source.js'
-import { UNIT_ORDER, fromLocal, coordinate, cellAt } from '../src/domain/calendar.js'
+import { UNIT_ORDER, fromLocal, coordinate, cellAt, dayPartWindow } from '../src/domain/calendar.js'
 
 test('all three header levels project real boundaries with the active coordinate model', () => {
   const load = createSourceLoader()
@@ -17,7 +17,8 @@ test('all three header levels project real boundaries with the active coordinate
           const cell = cellAt(group.startTime, row.unit)
           assert.equal(group.startTime, cell.start)
           assert.equal(group.startI, coordinate(cell.start, unit) - coordinate(origin, unit))
-          assert.equal(group.endI + 1, coordinate(cell.end, unit) - coordinate(origin, unit))
+          const range = row.unit === 'dayPart' ? dayPartWindow(cell) : cell
+          assert.equal(group.endI + 1, coordinate(range.end, unit) - coordinate(origin, unit))
           assert.ok(group.endI + 1 > group.startI)
           assert.equal(typeof group.label, 'string')
         }

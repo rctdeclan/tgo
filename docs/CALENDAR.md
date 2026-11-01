@@ -16,29 +16,29 @@ Existing events remain { anchor, definedUnit, amount }. Anchor/start/end values 
 
 Supporting helpers: eventInterval(term) resolves an event without changing storage; addCalendar(instant,unit,integerAmount) performs wall-clock addition; fromLocal(localDateTime,{offset?}) explicitly resolves local input; zoned(instant) supplies the configured Temporal.ZonedDateTime for formatting. Core operations accept epoch milliseconds, absolute ISO instant strings or Temporal values with epochMilliseconds. fromLocal is for zoneless local input; supply an offset through its explicit option when selecting an overlap occurrence.
 
-Supported units: minute, fifteenMinute, hour, fourHour, day, week, fortnight, month, quarter, year. Invalid units/non-finite coordinates fail clearly. Fractional event amounts are deferred by user decision; positive integer event amounts are validated before insertion. nextCell/addCalendar integer amounts can be negative; addCalendar(instant,unit,0) preserves the original instant.
+Supported units: minute, fifteenMinute, hour, dayPart, day, week, fortnight, month, quarter, year. Invalid units/non-finite coordinates fail clearly. Fractional event amounts are deferred by user decision; positive integer event amounts are validated before insertion. nextCell/addCalendar integer amounts can be negative; addCalendar(instant,unit,0) preserves the original instant.
 
 ## Approved calendar policies
 
 - Europe/Amsterdam, consistently independent of the OS timezone. Temporal uses the host's IANA/Intl data; historical rules may depend on the installed database version.
 - Gregorian month/year arithmetic, explicit overflow: constrain. January 31 +1 month ends February 28/29; +2 months is calculated directly from the original anchor and ends March 31. Quarters add three calendar months, years account for leap days.
 - Monday weeks. Fortnights are consecutive two-week periods anchored at local Monday 1970-01-05 midnight; pairing does not restart at New Year.
-- Quarters begin January/April/July/October. Day/month/year index zero starts at local 1970-01-01; week/fortnight index zero at 1970-01-05. Four-hour cells use six civil blocks per local date, at 00/04/08/12/16/20. Negative indices are supported.
+- Quarters begin January/April/July/October. Day/month/year index zero starts at local 1970-01-01; week/fortnight index zero at 1970-01-05. Five day-part ownership cells begin at 06/11/14/18/22, with Night continuing to the following 06:00. Their named windows can overlap; see DAY_PARTS_AND_LABELS.md. Negative indices are supported.
 - Explicit disambiguation: compatible. Nonexistent local 2026-03-29 02:30 resolves to 03:30; ambiguous 2026-10-25 02:30 defaults to the earlier +02:00 occurrence. fromLocal(...,{offset:'+01:00'}) selects the later occurrence and rejects an invalid offset.
 - Calendar addition uses PlainDateTime.add followed by ZonedDateTime.from with offset: prefer and disambiguation: compatible. A valid anchor offset is retained, as approved. The second autumn 02:30 + one minute is the second 02:31, not a backward jump.
-- ALL event units use local wall-clock addition. One hour from the first autumn 02:30 ends at 03:30 (two elapsed hours). One fourHour from spring 01:30 ends 05:30 (three elapsed hours). This intentionally differs from exact elapsed-time arithmetic.
+- ALL event units use local wall-clock addition. One hour from the first autumn 02:30 ends at 03:30 (two elapsed hours). Legacy fourHour arithmetic still supports spring 01:30 → 05:30 (three elapsed hours); it is no longer a displayed grouping. Day-part amounts count named windows and retain the anchor offset, as detailed in DAY_PARTS_AND_LABELS.md. This intentionally differs from exact elapsed-time arithmetic.
 
 Calendar addition is not generally invertible: clamping January 31 to February 28 and then independently subtracting one month gives January 28. A backward wall-clock addition into a spring gap can resolve forward to the starting instant. These facts do not compromise the forward/inverse coordinate mapping. Positive event intervals are required.
 
 ## Cells versus arithmetic
 
-Hours/minutes/15-minute cells follow chronological actual civil-grid boundaries. Missing boundaries are skipped; repeated autumn hours are distinct cells/instants. The two 02:30 occurrences have hour coordinates one cell apart. Four-hour cells remain 00-04 etc.; spring/autumn first blocks have three/five elapsed hours. Days have 23/25 elapsed hours at DST changes but each has width one in day coordinates.
+Hours/minutes/15-minute cells follow chronological actual civil-grid boundaries. Missing boundaries are skipped; repeated autumn hours are distinct cells/instants. The two 02:30 occurrences have hour coordinates one cell apart. Day-part coordinate cells remain a unique partition while their named Evening/Night windows overlap. Legacy four-hour API cells remain available for compatibility only. Days have 23/25 elapsed hours at DST changes but each has width one in day coordinates.
 
 nextCell(firstRepeatedHour) reaches the second repeated hour. addCalendar(first02:30,'hour',1) instead reaches 03:30 because the approved event policy is wall-clock arithmetic. Do not replace either operation with the other.
 
 Temporal supplies offset transitions via getTimeZoneTransition and offsetNanoseconds. The sub-day index adapter counts grid boundaries in constant-offset segments, preserving consecutive integer indexes and partial cells at historical non-whole-hour transitions. It does not predict DST dates or implement timezone rules. Segment memoization is deterministic mathematical caching, not shared scheduling state; lookup order does not change results. Very distant sub-day lookups may enumerate many Temporal transitions.
 
-For civil date units, Temporal PlainDate/PlainYearMonth addition/difference supplies boundaries and indexes. Remaining integer divisions only group 15 minutes, four hours, seven/fourteen days and three months; they are not elapsed-duration approximations.
+For civil date units, Temporal PlainDate/PlainYearMonth addition/difference supplies boundaries and indexes. Remaining integer divisions only group 15 minutes, legacy four hours, five named day-part positions, seven/fourteen days and three months; they are not elapsed-duration approximations.
 
 ## Equal-width, continuous coordinates
 
@@ -71,3 +71,5 @@ Header grouping iterates actual calendar cells, projects their boundaries and us
 See TEMPORAL_MIGRATION.md for tests, build, real Chrome smoke results and file inventory. No fractional-event policy, timezone selector, persistence, lane replacement or unrelated scheduling feature was added. Existing list clipping/overflow, row-cache loss and draft interpretation against the current viewport at submission remain. Cross-level mappings are not globally affine, so the existing short horizontal keyboard scale animation is a local approximation; settled coordinates/anchors are authoritative. Physical Safari/macOS pinch/history gestures require manual verification.
 
 Primary references: [Temporal.ZonedDateTime](https://tc39.es/proposal-temporal/docs/zoneddatetime.html), [Temporal polyfill](https://github.com/js-temporal/temporal-polyfill).
+
+The latest approved day-part windows, ownership/event distinctions and annual Fortnight x labels are documented in DAY_PARTS_AND_LABELS.md; they supersede the earlier six-four-hour-group display.

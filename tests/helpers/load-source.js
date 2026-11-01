@@ -23,7 +23,7 @@ export function createSourceLoader({ modules = {}, globals = {} } = {}) {
     const resolve = name => {
       if (Object.hasOwn(modules, name)) return modules[name]
       if (!name.startsWith('.')) return require(name)
-      if (name.endsWith('.png')) return name
+      if (/\.(png|jpe?g|webp|svg)$/.test(name)) return name
       const candidate = path.resolve(path.dirname(file), name)
       const target = [candidate, `${candidate}.js`, `${candidate}.jsx`]
         .find(value => fs.existsSync(value) && fs.statSync(value).isFile())

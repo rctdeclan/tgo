@@ -2,7 +2,7 @@
 import React, { useRef, useState } from "react"
 import { project, isListEvent } from "../domain/projection"
 import { UNIT_ORDER, cellAt, nextCell, eventInterval } from "../domain/calendar"
-import bg from "../bg.png"
+import bg from "../assets/strokes-background.jpg"
 
 const BASE_WIDTH=120
 const ROW_HEIGHT=40
@@ -380,15 +380,13 @@ export class StrokesPart {
 
 
 
-                <text
-                  x={frameInset + 28}
-                  y={frameInset + 21}
-                  fontSize="18"
-                  fill={e.color}
-                  fontFamily="Futura"
-                >
-                  {e.title}
-                </text>
+                <title>{e.title}</title>
+                <svg data-event-label={e.id}
+                  x={frameInset + 28} y={frameInset}
+                  width={Math.max(0, eventWidth - 36)} height={CELL_HEIGHT}
+                  style={{ overflow: 'hidden', pointerEvents: 'none' }}>
+                  <text x={0} y={21} fontSize="18" fill={e.color} fontFamily="Futura">{e.title}</text>
+                </svg>
               </svg>
             )
           })()

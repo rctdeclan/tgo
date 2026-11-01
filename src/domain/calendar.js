@@ -1,13 +1,20 @@
 import { Temporal } from "@js-temporal/polyfill"
 
 export const TIME_ZONE = "Europe/Amsterdam"
-export const UNIT_ORDER = ["minute", "fifteenMinute", "hour", "fourHour", "day", "week", "fortnight", "month", "quarter", "year"]
+export const UNIT_ORDER = ["minute", "fifteenMinute", "hour", "dayPart", "day", "week", "fortnight", "month", "quarter", "year"]
+export const DAY_PARTS = [
+  { label: 'Morning', startHour: 6, endHour: 11, endDayOffset: 0 },
+  { label: 'Noon', startHour: 11, endHour: 14, endDayOffset: 0 },
+  { label: 'Afternoon', startHour: 14, endHour: 18, endDayOffset: 0 },
+  { label: 'Evening', startHour: 18, endHour: 1, endDayOffset: 1 },
+  { label: 'Night', startHour: 22, endHour: 6, endDayOffset: 1 }
+]
 const DISAMBIGUATION = "compatible" // Earlier overlap; shift gaps forward.
 const DATE_ANCHOR = Temporal.PlainDate.from("1970-01-01")
 const WEEK_ANCHOR = Temporal.PlainDate.from("1970-01-05")
 const DURATIONS = {
   minute: ["minutes", 1], fifteenMinute: ["minutes", 15], hour: ["hours", 1],
-  fourHour: ["hours", 4], day: ["days", 1], week: ["days", 7],
+  dayPart: ["dayParts", 1], fourHour: ["hours", 4], day: ["days", 1], week: ["days", 7],
   fortnight: ["days", 14], month: ["months", 1], quarter: ["months", 3], year: ["years", 1]
 }
 
@@ -39,6 +46,16 @@ export function addCalendar(value, unit, amount) {
   integer(amount, "Calendar amount")
   const start = zoned(value)
   if (amount === 0) return start.epochMilliseconds
+  if (unit === 'dayPart') {
+    const cell = cellAt(value, unit)
+    const offset = start.toPlainDateTime().since(zoned(cell.start).toPlainDateTime(), { largestUnit: 'days' })
+    // Count named parts, including their overlap, rather than summing durations.
+    const target = amount > 0 ? dayPartWindow(nextCell(cell, amount - 1)).end : nextCell(cell, amount).start
+    const local = zoned(target).toPlainDateTime().add(offset)
+    return Temporal.ZonedDateTime.from(`${local}${start.offset}[${TIME_ZONE}]`, {
+      disambiguation: DISAMBIGUATION, offset: 'prefer'
+    }).epochMilliseconds
+  }
   const [field, multiple] = DURATIONS[unit]
   const local = start.toPlainDateTime().add({ [field]: integer(amount * multiple, "Calendar amount") }, { overflow: "constrain" })
   return Temporal.ZonedDateTime.from(`${local}${start.offset}[${TIME_ZONE}]`, {
@@ -114,7 +131,14 @@ function indexedCell(index, unit) {
   if (GRIDS[unit]) interval = GRIDS[unit].indexed(index)
   else {
     let date, end
-    if (unit === "fourHour") {
+    if (unit === 'dayPart') {
+      const count = DAY_PARTS.length
+      const part = ((index % count) + count) % count
+      const dateAnchor = DATE_ANCHOR.add({ days: Math.floor(index / count) })
+      date = dateAnchor.toPlainDateTime({ hour: DAY_PARTS[part].startHour })
+      end = dateAnchor.add({ days: part === count - 1 ? 1 : 0 })
+        .toPlainDateTime({ hour: DAY_PARTS[(part + 1) % count].startHour })
+    } else if (unit === "fourHour") {
       date = DATE_ANCHOR.add({ days: Math.floor(index / 6) }).toPlainDateTime({ hour: ((index % 6 + 6) % 6) * 4 })
       end = date.add({ hours: 4 })
     } else {
@@ -136,6 +160,14 @@ export function cellAt(value, unit) {
   const local = zoned(time)
   const date = local.toPlainDate()
   const days = date.since(DATE_ANCHOR, { largestUnit: "days" }).days
+  if (unit === 'dayPart') {
+    let part = DAY_PARTS.length - 1
+    const beforeMorning = local.hour < DAY_PARTS[0].startHour
+    if (!beforeMorning) {
+      for (let i = 0; i < DAY_PARTS.length; i++) if (local.hour >= DAY_PARTS[i].startHour) part = i
+    }
+    return indexedCell((days - (beforeMorning ? 1 : 0)) * DAY_PARTS.length + part, unit)
+  }
   const months = Temporal.PlainYearMonth.from(local).since("1970-01", { largestUnit: "months" }).months
   const index = unit === "fourHour" ? days * 6 + Math.floor(local.hour / 4)
     : unit === "day" ? days
@@ -145,6 +177,15 @@ export function cellAt(value, unit) {
 }
 export function nextCell(cell, amount = 1) {
   return indexedCell(cell.index + integer(amount, "Cell amount"), cell.unit)
+}
+
+// Display/event windows may overlap; coordinate cells above remain a partition.
+export function dayPartWindow(value) {
+  const cell = value?.unit === 'dayPart' ? value : cellAt(value, 'dayPart')
+  const part = DAY_PARTS[((cell.index % DAY_PARTS.length) + DAY_PARTS.length) % DAY_PARTS.length]
+  const date = zoned(cell.start).toPlainDate().add({ days: part.endDayOffset })
+  const end = date.toPlainDateTime({ hour: part.endHour }).toZonedDateTime(TIME_ZONE, { disambiguation: DISAMBIGUATION }).epochMilliseconds
+  return { ...cell, end, label: part.label, overlapsNext: end > cell.end }
 }
 export function cellPosition(value, cell) {
   const time = milliseconds(value)

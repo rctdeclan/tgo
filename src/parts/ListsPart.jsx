@@ -66,23 +66,23 @@ export class ListsPart {
             <g key={`list-col-${i}`}>
               {shown.map((item, itemIdx) => (
                 <svg key={item.id}
+                  data-list-item={item.id}
                   x={x + GAP / 2}
-                  y={18 + itemIdx * 40}>
+                  y={18 + itemIdx * 40}
+                  width={Math.max(1, cellWidth - GAP)} height={CELL_HEIGHT}
+                  style={{ overflow: 'hidden' }}>
+                  <title>{item.title}</title>
                   <rect
                     width={Math.max(1, cellWidth - GAP)}
                     height={30}
                     fill="#E9E9E9"
                     fillOpacity={1}
                   />
-                  <text
-                    x={8}
-                    y={20}
-                    fontSize="11"
-                    fill="#58595B"
-                    fontFamily="Futura"
-                  >
-                    {labelWithIndicator(item, vp.unit)}
-                  </text>
+                  <svg data-list-label={item.id} x={8} y={0}
+                    width={Math.max(0, cellWidth - GAP - 16)} height={CELL_HEIGHT}
+                    style={{ overflow: 'hidden', pointerEvents: 'none' }}>
+                    <text x={0} y={20} fontSize="11" fill="#58595B" fontFamily="Futura">{labelWithIndicator(item, vp.unit)}</text>
+                  </svg>
                 </svg>
               ))}
             </g>

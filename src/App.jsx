@@ -85,7 +85,7 @@ export const App = compose(BaseApp)
 
         { subject: "Engineering", title: "Core refactor", offsetDays: -7, offsetHours: 0, unit: "day", amount: 4 },
         { subject: "Engineering", title: "API integration", offsetDays: -2, offsetHours: 0, unit: "day", amount: 3 },
-        { subject: "Engineering", title: "Hotfix review", offsetDays: 0, offsetHours: 6, unit: "fourHour", amount: 1 },
+        { subject: "Engineering", title: "Hotfix review", offsetDays: 0, offsetHours: 6, unit: "dayPart", amount: 1 },
         { subject: "Engineering", title: "Deploy window", offsetDays: 4, offsetHours: 4, unit: "fifteenMinute", amount: 8 },
         { subject: "Engineering", title: "Pair debugging", offsetDays: 3, offsetHours: 1, unit: "hour", amount: 1 },
 
