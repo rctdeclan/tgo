@@ -22,3 +22,5 @@ Follow-up iPad navigation: 53/53 tests now pass. two-finger-timeline.test.js cov
 Responsiveness follow-up: 57 tests. navigation-performance.test.js validates atomic notifications/moving anchors and layout/header invalidation; two-finger tests also cover animation-frame coalescing and end/cancel behavior. Browser timing evidence is in ../docs/TOUCH_NAVIGATION.md; tests avoid machine-dependent time thresholds.
 
 iPhone preparation on main: 62 tests (57 existing + 5 in phone-frame.test.js), covering physical/scene input mapping, resize anchors/readability, content height, toolbar dispatch and native vertical wheel allowance. See ../docs/IPHONE_PREPARATION.md for mobile browser coverage and remaining physical Safari checks.
+
+Landscape sidebars: 64 tests. landscape-clipboard.test.js checks explicit clipboard access, buffer copy/clear behavior without OS clipboard erasure, and denied-access manual fallback. Orientation, black rail styling, 44px hit targets, reserved calendar space and portrait preservation are verified in browser QA.

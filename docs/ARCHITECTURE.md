@@ -109,3 +109,5 @@ Two-finger input coalesces to one sample per animation frame and invokes transfo
 ## iPhone presentation adapter
 
 Main now includes a responsive TimelineFrame around the original Views. Desktop retains 640x520; phones crop a centered, unscaled window into the logical 640-unit scene, with physical input coordinates translated to that scene. resizeFrame is dispatched through the existing viewport.navigate gamma, preserving center and fitting readable unit widths to the visible phone width. Safe-area chrome, 44px navigation controls, native vertical scrolling and editor placement remain presentation concerns. Calendar/routing/packing are unchanged. See IPHONE_PREPARATION.md for behavior, tests and physical-device limits.
+
+LandscapeTools adds presentation-local clipboard state and two black landscape-only rails around the measured center stage. Right-rail commands use the existing navigation gamma. Left-rail clipboard reads/writes require a user action; denied API access falls back to a manual text buffer. Portrait and the original calendar/routing/packing remain unchanged.

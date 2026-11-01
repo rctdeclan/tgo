@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { SCENE_WIDTH, SCENE_HEIGHT, phoneContentHeight } from './frameGeometry'
+import { LandscapeTools } from './LandscapeTools'
 
 const PHONE_QUERY = '(max-width: 639px), (max-width: 960px) and (max-height: 500px) and (pointer: coarse)'
 const UNIT_LABELS = { minute: 'Minutes', fifteenMinute: '15 minutes', hour: 'Hours', fourHour: '4 hours', day: 'Days', week: 'Weeks', fortnight: 'Fortnights', month: 'Months', quarter: 'Quarters', year: 'Years' }
@@ -25,9 +26,11 @@ export function TimelineFrame({ viewport, rowCount, onNavigate, children }) {
   return (
     <section className="tgo-shell" aria-label="TGO timeline">
       <header className="tgo-phone-heading"><strong>TGO</strong><span>Europe / Amsterdam</span></header>
-      <div className="tgo-canvas" ref={host}>
-        {children({ ...frame, height: frame.mobile ? phoneContentHeight(rowCount) : SCENE_HEIGHT })}
-      </div>
+      <LandscapeTools viewport={viewport} onNavigate={onNavigate}>
+        <div className="tgo-canvas" ref={host}>
+          {children({ ...frame, height: frame.mobile ? phoneContentHeight(rowCount) : SCENE_HEIGHT })}
+        </div>
+      </LandscapeTools>
       <nav className="tgo-phone-controls" aria-label="Timeline navigation">
         <button aria-label="Earlier" title="Earlier" onClick={() => onNavigate('panUnits', -1)}>‹</button>
         <button aria-label="Later" title="Later" onClick={() => onNavigate('panUnits', 1)}>›</button>
