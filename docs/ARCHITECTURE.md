@@ -105,3 +105,7 @@ The repository is a standalone Vite/React project rooted here; sibling archives 
 ## Touch responsiveness
 
 Two-finger input coalesces to one sample per animation frame and invokes transformGesture through the existing viewport.navigate gamma. Zoom/pan complete before one Body refresh. Strokes layout reuses derived geometry until event revision, unit or origin changes; Header caches bounded cell geometry/labels and updates current-period tint independently. Views mount visible grid/header elements with overscan while retaining the full semantic model. No lane algorithm or calendar policy changes. See TOUCH_NAVIGATION.md for measured performance and device limits.
+
+## iPhone presentation adapter
+
+Main now includes a responsive TimelineFrame around the original Views. Desktop retains 640x520; phones crop a centered, unscaled window into the logical 640-unit scene, with physical input coordinates translated to that scene. resizeFrame is dispatched through the existing viewport.navigate gamma, preserving center and fitting readable unit widths to the visible phone width. Safe-area chrome, 44px navigation controls, native vertical scrolling and editor placement remain presentation concerns. Calendar/routing/packing are unchanged. See IPHONE_PREPARATION.md for behavior, tests and physical-device limits.

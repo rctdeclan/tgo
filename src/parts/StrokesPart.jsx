@@ -177,7 +177,7 @@ export class StrokesPart {
     )
   }
 
-  Content = ({ viewport: vp, layout: { packed, rowCount }, onCreate }) => {
+  Content = ({ viewport: vp, layout: { packed, rowCount }, onCreate, frameWidth = FRAME_WIDTH }) => {
     const [hoveredCellKey, setHoveredCellKey] = useState(null)
     const [draft, setDraft] = useState(null)
     const handledDraftKeyRef = useRef(null)
@@ -189,12 +189,16 @@ export class StrokesPart {
     const worldLeft = -half * cellWidth
 
     // Keep the model's coverage, but mount only visible grid cells plus a buffer.
-    const firstColumn = Math.max(-half, Math.floor((-FRAME_WIDTH / 2 - vp.worldOffsetPx) / cellWidth) - 1)
-    const lastColumn = Math.min(half - 1, Math.ceil((FRAME_WIDTH / 2 - vp.worldOffsetPx) / cellWidth) + 1)
+    const firstColumn = Math.max(-half, Math.floor((-frameWidth / 2 - vp.worldOffsetPx) / cellWidth) - 1)
+    const lastColumn = Math.min(half - 1, Math.ceil((frameWidth / 2 - vp.worldOffsetPx) / cellWidth) + 1)
     const gridColumns = Array.from({ length: lastColumn - firstColumn + 1 }, (_, i) => firstColumn + i + half)
 
     const cellBodyWidth = Math.max(1, cellWidth - GAP)
-    const inputWidth = Math.max(120, cellBodyWidth)
+    const inputWidth = Math.min(frameWidth - 16, Math.max(120, cellBodyWidth))
+    const inputX = draft && frameWidth < FRAME_WIDTH
+      ? Math.max(-frameWidth / 2 - vp.worldOffsetPx + 8,
+        Math.min(draft.start * cellWidth + GAP / 2, frameWidth / 2 - vp.worldOffsetPx - inputWidth - 8))
+      : draft?.start * cellWidth + GAP / 2
 
     const buildDraftKey = (row, start) => {
       return `${row}:${start}`
@@ -278,7 +282,7 @@ export class StrokesPart {
 
         {draft && (
           <foreignObject
-            x={draft.start * cellWidth + GAP/2}
+            x={inputX}
             y={draft.row * ROW_HEIGHT}
             width={inputWidth}
             height={CELL_HEIGHT}
@@ -294,6 +298,7 @@ export class StrokesPart {
             >
               <input
                 autoFocus
+                enterKeyHint="done"
                 value={draft.title}
                 onChange={event => {
                   handledDraftKeyRef.current = null

@@ -8,6 +8,7 @@ import { HeaderPart } from "./parts/HeaderPart"
 import { StrokesPart } from "./parts/StrokesPart"
 import { ListsPart } from "./parts/ListsPart"
 import { ViewportSVG } from "./ui/ViewportSVG"
+import { TimelineFrame } from "./ui/TimelineFrame"
 
 class BaseApp {}
 
@@ -134,20 +135,27 @@ function AppPresentation({ parts, app }) {
     stepUnit: (...args) => app.navigate("stepUnit", ...args)
   }
   return (
-    <ViewportSVG
-      config={app.viewportConfig}
-      viewport={viewport}
-      getStepZoomScale={app.getStepZoomScale}
-      stationaryChildren={
-        <>
-          <parts.strokes.Background viewport={model.viewport} layout={model.layout} />
-          <parts.lists.Background {...model.lists} />
-        </>
-      }
-    >
-      <parts.strokes.Content viewport={model.viewport} layout={model.layout} onCreate={draft => app.createEvent(draft)} />
-      <parts.lists.Content {...model.lists} />
-      <parts.header.View {...model.header} onNavigate={app.navigateHeader} />
-    </ViewportSVG>
+    <TimelineFrame viewport={model.viewport} rowCount={model.layout.rowCount} onNavigate={app.navigate}>
+      {frame => (
+        <ViewportSVG
+          frameWidth={frame.width}
+          frameHeight={frame.height}
+          mobile={frame.mobile}
+          config={app.viewportConfig}
+          viewport={viewport}
+          getStepZoomScale={app.getStepZoomScale}
+          stationaryChildren={
+            <>
+              <parts.strokes.Background viewport={model.viewport} layout={model.layout} />
+              <parts.lists.Background {...model.lists} />
+            </>
+          }
+        >
+          <parts.strokes.Content frameWidth={frame.width} viewport={model.viewport} layout={model.layout} onCreate={draft => app.createEvent(draft)} />
+          <parts.lists.Content {...model.lists} />
+          <parts.header.View {...model.header} frameWidth={frame.width} onNavigate={app.navigateHeader} />
+        </ViewportSVG>
+      )}
+    </TimelineFrame>
   )
 }

@@ -8,7 +8,7 @@ const DISSOLVE_MS = 180
 const KEYBOARD_MOTION_MS = 180
 const BASE_CELL_WIDTH = 120
 
-export function ViewportSVG({children, stationaryChildren, config, viewport: vp, getStepZoomScale}){
+export function ViewportSVG({children, stationaryChildren, config, viewport: vp, getStepZoomScale, frameWidth = WIDTH, frameHeight = HEIGHT, mobile = false}){
   const [isDissolving,setIsDissolving] = useState(false)
   const [keyboardPanOffsetPx,setKeyboardPanOffsetPx] = useState(0)
   const [keyboardZoomScale,setKeyboardZoomScale] = useState(1)
@@ -18,6 +18,7 @@ export function ViewportSVG({children, stationaryChildren, config, viewport: vp,
   const keyboardTransformTimeoutRef = useRef(null)
   const { bind } = useTrackpadTimeline(vp, {
     width: WIDTH,
+    allowVerticalScroll: mobile,
     minScale: config?.zoomLower ?? 0.5,
     maxScale: config?.zoomUpper ?? 2
   })
@@ -137,10 +138,13 @@ export function ViewportSVG({children, stationaryChildren, config, viewport: vp,
 
   return (
     <svg {...bind}
-         width={WIDTH}
-         height={HEIGHT}
+         width={frameWidth}
+         height={frameHeight}
+         viewBox={`${(WIDTH - frameWidth) / 2} 0 ${frameWidth} ${frameHeight}`}
+         role="group"
+         aria-label="Interactive calendar"
          style={{
-           touchAction: "none",
+           touchAction: mobile ? "pan-y" : "none",
            overscrollBehavior: "none",
            WebkitUserSelect: "none",
            userSelect: "none"
@@ -148,9 +152,9 @@ export function ViewportSVG({children, stationaryChildren, config, viewport: vp,
       <g
         transform={`translate(${WIDTH/2+vp.worldOffsetPx},0)`}
         style={{
-          opacity: isDissolving ? 0.72 : 1,
-          filter: isDissolving ? "blur(1.5px)" : "blur(0px)",
-          transition: `opacity ${DISSOLVE_MS}ms ease, filter ${DISSOLVE_MS}ms ease`
+          opacity: !mobile && isDissolving ? 0.72 : 1,
+          filter: mobile ? 'none' : isDissolving ? "blur(1.5px)" : "blur(0px)",
+          transition: mobile ? 'none' : `opacity ${DISSOLVE_MS}ms ease, filter ${DISSOLVE_MS}ms ease`
         }}
       >
         {stationaryChildren}

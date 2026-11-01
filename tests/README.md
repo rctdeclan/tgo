@@ -20,3 +20,5 @@ Cloud initialization: fresh Linux npm ci, all 49 tests/build and 10 calendar/hea
 Follow-up iPad navigation: 53/53 tests now pass. two-finger-timeline.test.js covers moving midpoint anchoring, finger lifecycle, tap/click behavior and duplicate input suppression. See ../docs/TOUCH_NAVIGATION.md for native Chromium touch smoke evidence and physical iPad limits.
 
 Responsiveness follow-up: 57 tests. navigation-performance.test.js validates atomic notifications/moving anchors and layout/header invalidation; two-finger tests also cover animation-frame coalescing and end/cancel behavior. Browser timing evidence is in ../docs/TOUCH_NAVIGATION.md; tests avoid machine-dependent time thresholds.
+
+iPhone preparation on main: 62 tests (57 existing + 5 in phone-frame.test.js), covering physical/scene input mapping, resize anchors/readability, content height, toolbar dispatch and native vertical wheel allowance. See ../docs/IPHONE_PREPARATION.md for mobile browser coverage and remaining physical Safari checks.

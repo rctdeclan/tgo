@@ -2,7 +2,7 @@
 
 ## Authority and scope
 
-The corrected full Temporal request and subsequent user replies define current calendar scope. P2-P3 Cookbook and P4/P5 Temporal integration are implemented and ready for review. The Cloud initialization task was documentation-only. The subsequent user request authorizes iPad two-finger pan/zoom and Sites deployment; keep changes within that scope. The repository is now published at https://github.com/rctdeclan/tgo; main tracks origin/main. Earlier authorization covers a verified handoff commit/push. Future commits/pushes require task authorization. Only the main replanner project is in scope; do not audit/edit sibling archives or revert unrelated changes.
+The corrected full Temporal request and subsequent user replies define current calendar scope. P2-P3 Cookbook and P4/P5 Temporal integration are implemented and ready for review. The Cloud initialization task was documentation-only. Follow-up requests authorize iPad gestures and iPhone web preparation on main, with deployment to the original TGO Site. The temporary header study stays separate; keep changes within the requested scope. The repository is now published at https://github.com/rctdeclan/tgo; main tracks origin/main. Earlier authorization covers a verified handoff commit/push. Future commits/pushes require task authorization. Only the main replanner project is in scope; do not audit/edit sibling archives or revert unrelated changes.
 
 ## Cookbook: mandatory and unchanged
 
@@ -30,7 +30,7 @@ Routing is by semantic definedUnit rank ONLY: finer than display -> list, equal/
 - ViewportPart owns one createViewport instance. state/viewport.js uses shared calendar coordinates, cursor/center anchoring, local transition spans and dynamic rendered-column coverage; no shared application singleton.
 - HeaderPart uses real cells/common labels; StrokesPart owns events/unchanged assignRowsForUnit; ListsPart consumes supplied shared layout; PackingPart remains inactive in the lane path.
 - AppPresentation uses useSyncExternalStore; Views do not directly query siblings. src/domain/labels.js formats consistently in Amsterdam.
-- Keep the 640x520 SVG, three header rows where levels exist, colors/spacing/assets, part-owned stationary bg.png/bg2.png, lists below strokes and horizontal-only motion.
+- Preserve the 640x520 desktop frame and logical 640-unit scene. iPhone preparation may use a centered narrow viewBox, safe-area shell, accessible navigation toolbar and vertical scrolling; see docs/IPHONE_PREPARATION.md. Keep the three header rows where available, original assets/colors, part-owned backgrounds, lists below strokes and unchanged lane/calendar semantics.
 - useTrackpadTimeline uses use-gesture with target:ref/passive:false, retaining existing thresholds and Safari listeners. Do not regress to passive React wheel-prop binding.
 - Scheduling stays in memory. No storage/backend, new event manager, lane redesign or unrelated features. Existing row-cache loss, crowded-list clipping, offscreen coarse-event labels and current-viewport draft submission behavior remain known issues, not target invariants.
 
@@ -76,3 +76,7 @@ npm audit reports 9 development dependency findings (6 high, 2 moderate, 1 low);
 The follow-up implements native two-touch pan/continuous pinch via src/hooks/twoFingerTimeline.js and useTrackpadTimeline, preserving desktop thresholds and avoiding duplicate touch/Safari deliveries. See docs/TOUCH_NAVIGATION.md. Current suite: 57 tests and build pass; mobile Chromium multi-touch smoke passes. Physical iPad Safari is still a device check. .openai/hosting.json records the owner-private Sites project and static dist output; reuse its ID. Never commit credentials, generated dist or node_modules. Calendar, routing and lanes remain unchanged.
 
 Touch responsiveness: updates are coalesced per animation frame and use one atomic viewport transform before notification. Derived Strokes layout caches invalidate on insertion/unit/origin; Header geometry/labels are bounded caches with current-period tint refreshed separately. Render visible grid/header elements plus overscan, retaining full semantic coverage and original lanes. See docs/TOUCH_NAVIGATION.md for model/browser profiling evidence; physical iPad performance is not certified.
+
+## iPhone preparation on main
+
+Read docs/IPHONE_PREPARATION.md. The web app adapts its visible frame and input coordinates to phone portrait/short landscape screens without shrinking text or replacing canonical calendar/viewport logic. resizeFrame uses the existing viewport navigation gamma; readable zoom respects actual visible width and preserves center. Phone controls dispatch existing capabilities, vertical scrolling reaches rows/lists, and input text is 16px with clamped editor placement. Desktop stays 640x520. Current suite: 62 tests. Physical iPhone Safari, keyboard/safe-area and rotation behavior still need device testing. No native Xcode/App Store project or persistence is introduced. The header-study branch/Site remains separate.

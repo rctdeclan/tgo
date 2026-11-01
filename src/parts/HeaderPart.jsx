@@ -71,15 +71,15 @@ export class HeaderPart {
     return gamma
   }
 
-  View = ({ viewport: vp, rows: visibleRowConfigs, onNavigate }) => {
+  View = ({ viewport: vp, rows: visibleRowConfigs, onNavigate, frameWidth = FRAME_WIDTH }) => {
     const [hoveredGroupKey, setHoveredGroupKey] = useState(null)
     if (!vp.unit) return null
     const cellWidth = BASE_WIDTH * vp.zoom
     const half = Math.floor((vp.visibleCells ?? VISIBLE) / 2)
     const worldWidth = cellWidth * (vp.visibleCells ?? VISIBLE)
     const worldLeft = -half * cellWidth
-    const visibleMinX = -FRAME_WIDTH / 2 - vp.worldOffsetPx - worldLeft
-    const visibleMaxX = FRAME_WIDTH / 2 - vp.worldOffsetPx - worldLeft
+    const visibleMinX = -frameWidth / 2 - vp.worldOffsetPx - worldLeft
+    const visibleMaxX = frameWidth / 2 - vp.worldOffsetPx - worldLeft
 
     return (
       <g>

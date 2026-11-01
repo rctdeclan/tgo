@@ -12,9 +12,10 @@ export function unitRatio(finer, coarser, instant) {
 }
 
 export function createViewport(config = {}) {
+  let frameWidth = WIDTH
   let state = { unitIndex: 2, zoom: 1, worldOffsetPx: 0, worldOriginTime: cellAt(Date.now(), UNIT_ORDER[2]).start }
   const unit = () => UNIT_ORDER[state.unitIndex]
-  const upper = bounds => Math.min(bounds?.maxScale ?? config.zoomUpper ?? DEFAULT_UPPER, DEFAULT_UPPER)
+  const upper = bounds => Math.min(bounds?.maxScale ?? config.zoomUpper ?? DEFAULT_UPPER, frameWidth / (3 * BASE_WIDTH))
   const clampZoom = (zoom, index, bounds) => index === UNIT_ORDER.length - 1
     ? Math.max(bounds?.minScale ?? config.zoomLower ?? 0.5, Math.min(upper(bounds), zoom))
     : Math.min(upper(bounds), zoom)
@@ -65,6 +66,12 @@ export function createViewport(config = {}) {
     if (delta !== 0) panBy(delta)
   }
   function panUnits(amount) { panBy(amount * BASE_WIDTH * state.zoom) }
+  function resizeFrame(width) {
+    if (!Number.isFinite(width) || width <= 0 || width === frameWidth) return
+    const instant = timeAt()
+    frameWidth = Math.min(WIDTH, width)
+    anchorAt(instant, WIDTH / 2, Math.min(state.zoom, upper()), state.unitIndex)
+  }
   function jumpTo(index, instant) {
     if (!Number.isFinite(index)) return
     index = clampIndex(index)
@@ -93,6 +100,6 @@ export function createViewport(config = {}) {
       const visibleHalf = Math.max(20, Math.ceil((WIDTH / 2 + Math.abs(state.worldOffsetPx)) / (BASE_WIDTH * state.zoom)) + 2)
       return { ...state, unit: unit(), visibleCells: 2 * visibleHalf }
     },
-    panBy, panUnits, zoomByScaleFactor, transformGesture, jumpTo, stepUnit, stepScale
+    panBy, panUnits, zoomByScaleFactor, transformGesture, resizeFrame, jumpTo, stepUnit, stepScale
   }
 }

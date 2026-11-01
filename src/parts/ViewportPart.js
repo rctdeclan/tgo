@@ -18,6 +18,7 @@ export class ViewportPart {
       panUnits: (...args) => viewport.panUnits(...args),
       zoomByScaleFactor: (...args) => viewport.zoomByScaleFactor(...args),
       transformGesture: (...args) => viewport.transformGesture(...args),
+      resizeFrame: (...args) => viewport.resizeFrame(...args),
       jumpTo: (...args) => viewport.jumpTo(...args),
       stepUnit: (...args) => viewport.stepUnit(...args)
     }

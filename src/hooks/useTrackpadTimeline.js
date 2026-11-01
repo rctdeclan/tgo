@@ -1,12 +1,14 @@
 import { useEffect, useRef } from "react"
 import { useGesture } from "@use-gesture/react"
 import { attachTwoFingerTimeline } from "./twoFingerTimeline"
+import { sceneX } from "../ui/frameGeometry"
 
 export function useTrackpadTimeline(viewport, options = {}){
   const {
     width = 640,
     minScale = 0.5,
     maxScale = 10,
+    allowVerticalScroll = false,
     zoomSensitivity = 0.00035
   } = options
 
@@ -30,11 +32,12 @@ export function useTrackpadTimeline(viewport, options = {}){
   useGesture(
     {
       onWheel: ({ event, delta: [dx, dy], ctrlKey }) => {
+        if (allowVerticalScroll && !ctrlKey && Math.abs(dy) > Math.abs(dx)) return
         event.preventDefault()
 
         const rect = ref.current?.getBoundingClientRect()
-        const viewportWidth = rect?.width || width
-        const cursorX = rect ? event.clientX - rect.left : viewportWidth / 2
+        const viewportWidth = width
+        const cursorX = rect ? sceneX(event.clientX - rect.left, rect.width, width) : width / 2
 
         if(ctrlKey){
           wheelZoomRemainderRef.current += dy
@@ -57,8 +60,8 @@ export function useTrackpadTimeline(viewport, options = {}){
         // The retained Safari adapter below owns native gesture events.
         if(event?.type?.startsWith("gesture")) return distance
         const rect = ref.current?.getBoundingClientRect()
-        const viewportWidth = rect?.width || width
-        const cursorX = rect ? origin[0] - rect.left : viewportWidth / 2
+        const viewportWidth = width
+        const cursorX = rect ? sceneX(origin[0] - rect.left, rect.width, width) : width / 2
 
         if(first){
           pinchZoomRemainderRef.current = 0
@@ -92,8 +95,8 @@ export function useTrackpadTimeline(viewport, options = {}){
     if (!ref.current) return undefined
     return attachTwoFingerTimeline(ref.current, {
       panBy: delta => viewportRef.current.panBy(delta),
-      transformGesture: (...args) => viewportRef.current.transformGesture(...args),
-      zoomByScaleFactor: (...args) => viewportRef.current.zoomByScaleFactor(...args)
+      transformGesture: (x, factor, delta, displayWidth, bounds) => viewportRef.current.transformGesture(sceneX(x, displayWidth, width), factor, delta, width, bounds),
+      zoomByScaleFactor: (x, factor, displayWidth, bounds) => viewportRef.current.zoomByScaleFactor(sceneX(x, displayWidth, width), factor, width, bounds)
     }, { width, minScale, maxScale,
       requestFrame: callback => window.requestAnimationFrame(callback),
       cancelFrame: handle => window.cancelAnimationFrame(handle),
@@ -116,9 +119,9 @@ export function useTrackpadTimeline(viewport, options = {}){
       if(touchActiveRef.current) return
 
       const rect = node.getBoundingClientRect()
-      const viewportWidth = rect.width || width
+      const viewportWidth = width
       const cursorX = Number.isFinite(event.clientX)
-        ? event.clientX - rect.left
+        ? sceneX(event.clientX - rect.left, rect.width, width)
         : viewportWidth / 2
 
       const previousScale = lastGestureScaleRef.current || 1
