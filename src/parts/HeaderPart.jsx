@@ -1,12 +1,12 @@
 import React, { useState } from "react"
 import { UNIT_ORDER, cellAt, nextCell, coordinate, instantAt, dayPartWindow, zoned, TIME_ZONE } from "../domain/calendar"
 import { headerLabel } from "../domain/labels"
+import { gapAtInstant } from '../ui/strokeGeometry'
 
 const BASE_WIDTH = 120
 const VISIBLE = 40
 const FRAME_WIDTH = 640
 const HEADER_HEIGHT = 75
-const GAP = 14
 const ROW_HEIGHT = 21
 const ROW_Y = [6, 27, 48]
 const CURRENT_FILL_BY_ROW = ["#F6D7DA", "#E7B8BF", "#F6D7DA"]
@@ -141,6 +141,10 @@ export class HeaderPart {
                 const startX = (group.startI + half) * cellWidth
                 const spanWidth = (group.endI - group.startI + 1) * cellWidth
                 const endX = startX + spanWidth
+                const leftGap = gapAtInstant(group.startTime, vp.unit, cellWidth)
+                const rightGap = gapAtInstant(group.endTime, vp.unit, cellWidth)
+                const innerLeft = startX + leftGap / 2
+                const innerWidth = Math.max(1, spanWidth - leftGap / 2 - rightGap / 2)
                 if (endX < visibleMinX - cellWidth || startX > visibleMaxX + cellWidth) return null
                 const intersectsViewport =
                   endX > visibleMinX && startX < visibleMaxX
@@ -198,25 +202,25 @@ export class HeaderPart {
                   >
                     <title>{group.title || group.label}</title>
                     <rect
-                      x={startX + GAP / 2}
+                      x={innerLeft}
                       y={0}
-                      width={Math.max(1, spanWidth - GAP)}
+                      width={innerWidth}
                       height={ROW_HEIGHT}
                       fill={cellFill}
                       fillOpacity={row.unit === 'dayPart' ? 0.8 : 1}
                     />
                     <rect
-                      x={startX + spanWidth - GAP / 2}
+                      x={startX + spanWidth - rightGap / 2}
                       y={0}
-                      width={GAP}
+                      width={rightGap}
                       height={ROW_HEIGHT}
                       fill={cellFill}
                       fillOpacity={gapFillOpacity}
                     />
                     <rect
-                      x={startX + GAP / 2 + 4}
+                      x={innerLeft + 4}
                       y={9}
-                      width={Math.max(0, spanWidth - GAP - 8)}
+                      width={Math.max(0, innerWidth - 8)}
                       height={2}
                       fill={lineFill}
                     />
@@ -231,13 +235,13 @@ export class HeaderPart {
                     )}
                     <path
                       d="M0 7L7 14L8 13L2.4 7L8 1L7 0"
-                      transform={`translate(${startX + GAP / 2 + 4},3)`}
+                      transform={`translate(${innerLeft + 4},3)`}
                       fill={lineFill}
                       fillRule="nonzero"
                     />
                     <path
                       d="M0 7L7 14L8 13L2.4 7L8 1L7 0"
-                      transform={`translate(${startX + spanWidth - GAP / 2 - 4},3) scale(-1,1)`}
+                      transform={`translate(${startX + spanWidth - rightGap / 2 - 4},3) scale(-1,1)`}
                       fill={lineFill}
                       fillRule="nonzero"
                     />

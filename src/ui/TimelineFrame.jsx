@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { SCENE_WIDTH, SCENE_HEIGHT, phoneContentHeight } from './frameGeometry'
+import { SCENE_WIDTH, phoneContentHeight } from './frameGeometry'
 import { LandscapeTools } from './LandscapeTools'
 
 const PHONE_QUERY = '(max-width: 639px), (max-width: 960px) and (max-height: 500px) and (pointer: coarse)'
@@ -12,7 +12,7 @@ export function TimelineFrame({ viewport, rowCount, onNavigate, children }) {
     const query = window.matchMedia(PHONE_QUERY)
     let lastWidth
     function measure() {
-      const width = Math.max(1, Math.min(SCENE_WIDTH, host.current.getBoundingClientRect().width))
+      const width = Math.max(1, Math.min(SCENE_WIDTH, host.current.clientWidth))
       setFrame(current => current.width === width && current.mobile === query.matches
         ? current : { width, mobile: query.matches })
       if (width !== lastWidth) { lastWidth = width; onNavigate('resizeFrame', width) }
@@ -28,7 +28,7 @@ export function TimelineFrame({ viewport, rowCount, onNavigate, children }) {
       <header className="tgo-phone-heading"><strong>TGO</strong><span>Europe / Amsterdam</span></header>
       <LandscapeTools viewport={viewport} onNavigate={onNavigate}>
         <div className="tgo-canvas" ref={host}>
-          {children({ ...frame, height: frame.mobile ? phoneContentHeight(rowCount) : SCENE_HEIGHT })}
+          {children({ ...frame, height: phoneContentHeight(rowCount) })}
         </div>
       </LandscapeTools>
       <nav className="tgo-phone-controls" aria-label="Timeline navigation">

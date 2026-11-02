@@ -1,5 +1,5 @@
 .tgo-shell { width: 640px; max-width: 100%; min-width: 0; }
-.tgo-canvas { width: 100%; }
+.tgo-canvas { width: 100%; max-height: 520px; overflow-y: auto; overflow-x: hidden; }
 .tgo-canvas > svg { display: block; margin-inline: auto; }
 .tgo-phone-heading, .tgo-phone-controls { display: none; }
 
@@ -17,7 +17,7 @@
   }
   .tgo-phone-heading strong { font-size: 16px; letter-spacing: 1.8px; font-weight: 600; }
   .tgo-phone-heading span { font-size: 10px; color: #a4a5a6; }
-  .tgo-canvas { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; }
+  .tgo-canvas { flex: 1; min-height: 0; max-height: none; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; }
   .tgo-canvas input { font-size: 16px !important; }
   .tgo-canvas text, .tgo-canvas input { font-family: Futura, -apple-system, BlinkMacSystemFont, sans-serif !important; }
   .tgo-phone-controls {

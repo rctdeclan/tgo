@@ -77,36 +77,37 @@ export const App = compose(BaseApp)
       }
 
       const events = [
-        { subject: "Product", title: "Roadmap workshop", offsetDays: -8, offsetHours: 0, unit: "day", amount: 2 },
-        { subject: "Product", title: "Quarter planning", offsetDays: -20, offsetHours: 0, unit: "quarter", amount: 1 },
-        { subject: "Product", title: "Feature prioritization", offsetDays: -5, offsetHours: 0, unit: "day", amount: 1 },
-        { subject: "Product", title: "Launch checklist", offsetDays: 1, offsetHours: 0, unit: "day", amount: 2 },
-        { subject: "Product", title: "Backlog grooming", offsetDays: 2, offsetHours: 2, unit: "hour", amount: 2 },
+        { subject: "Product", title: "Roadmap workshop", subtitle: "Align the next releases with customer priorities.", offsetDays: -8, offsetHours: 0, unit: "day", amount: 2 },
+        { subject: "Product", title: "Quarter planning", subtitle: "Set outcomes, milestones and ownership for the quarter.", offsetDays: -20, offsetHours: 0, unit: "quarter", amount: 1 },
+        { subject: "Product", title: "Feature prioritization", subtitle: "Compare proposed improvements and agree on the next steps.", offsetDays: -5, offsetHours: 0, unit: "day", amount: 1 },
+        { subject: "Product", title: "Launch checklist", subtitle: "Review release readiness across the team.", offsetDays: 1, offsetHours: 0, unit: "day", amount: 2 },
+        { subject: "Product", title: "Backlog grooming", subtitle: "Clarify stories and estimate upcoming work.", offsetDays: 2, offsetHours: 2, unit: "hour", amount: 2 },
 
-        { subject: "Engineering", title: "Core refactor", offsetDays: -7, offsetHours: 0, unit: "day", amount: 4 },
-        { subject: "Engineering", title: "API integration", offsetDays: -2, offsetHours: 0, unit: "day", amount: 3 },
-        { subject: "Engineering", title: "Hotfix review", offsetDays: 0, offsetHours: 6, unit: "dayPart", amount: 1 },
-        { subject: "Engineering", title: "Deploy window", offsetDays: 4, offsetHours: 4, unit: "fifteenMinute", amount: 8 },
-        { subject: "Engineering", title: "Pair debugging", offsetDays: 3, offsetHours: 1, unit: "hour", amount: 1 },
+        { subject: "Engineering", title: "Core refactor", subtitle: "Simplify shared modules and reduce maintenance overhead.", offsetDays: -7, offsetHours: 0, unit: "day", amount: 4 },
+        { subject: "Engineering", title: "API integration", subtitle: "Connect the service endpoints and verify their contracts.", offsetDays: -2, offsetHours: 0, unit: "day", amount: 3 },
+        { subject: "Engineering", title: "Hotfix review", subtitle: "Review urgent fixes before approving a release.", offsetDays: 0, offsetHours: 6, unit: "dayPart", amount: 1 },
+        { subject: "Engineering", title: "Deploy window", subtitle: "Ship the release and monitor service health.", offsetDays: 4, offsetHours: 4, unit: "fifteenMinute", amount: 8 },
+        { subject: "Engineering", title: "Pair debugging", subtitle: "Investigate a difficult issue together.", offsetDays: 3, offsetHours: 1, unit: "hour", amount: 1 },
 
-        { subject: "Marketing", title: "Campaign planning", offsetDays: -10, offsetHours: 0, unit: "fortnight", amount: 1 },
-        { subject: "Marketing", title: "Ad creative sprint", offsetDays: -1, offsetHours: 0, unit: "day", amount: 2 },
-        { subject: "Marketing", title: "Launch announcement", offsetDays: 4, offsetHours: 0, unit: "day", amount: 1 },
+        { subject: "Marketing", title: "Campaign planning", subtitle: "Agree on the message, channels and delivery dates.", offsetDays: -10, offsetHours: 0, unit: "fortnight", amount: 1 },
+        { subject: "Marketing", title: "Ad creative sprint", subtitle: "Develop and review the next campaign assets.", offsetDays: -1, offsetHours: 0, unit: "day", amount: 2 },
+        { subject: "Marketing", title: "Launch announcement", subtitle: "Publish the release message across our channels.", offsetDays: 4, offsetHours: 0, unit: "day", amount: 1 },
 
-        { subject: "Research", title: "Interview block", offsetDays: -3, offsetHours: 0, unit: "day", amount: 1 },
-        { subject: "Research", title: "Usability session", offsetDays: 1, offsetHours: 3, unit: "hour", amount: 1 },
-        { subject: "Research", title: "Insights synthesis", offsetDays: 6, offsetHours: 0, unit: "day", amount: 2 },
+        { subject: "Research", title: "Interview block", subtitle: "Collect customer stories and unmet needs.", offsetDays: -3, offsetHours: 0, unit: "day", amount: 1 },
+        { subject: "Research", title: "Usability session", subtitle: "Observe how people complete key product tasks.", offsetDays: 1, offsetHours: 3, unit: "hour", amount: 1 },
+        { subject: "Research", title: "Insights synthesis", subtitle: "Turn research findings into actionable recommendations.", offsetDays: 6, offsetHours: 0, unit: "day", amount: 2 },
 
-        { subject: "Ops", title: "Security patching", offsetDays: -4, offsetHours: 0, unit: "day", amount: 1 },
-        { subject: "Ops", title: "Infra maintenance", offsetDays: 0, offsetHours: 1, unit: "hour", amount: 4 },
-        { subject: "Ops", title: "Cost review", offsetDays: 5, offsetHours: 0, unit: "day", amount: 1 },
-        { subject: "Ops", title: "Incident drill", offsetDays: 7, offsetHours: 2, unit: "hour", amount: 2 }
+        { subject: "Ops", title: "Security patching", subtitle: "Apply updates and verify the affected systems.", offsetDays: -4, offsetHours: 0, unit: "day", amount: 1 },
+        { subject: "Ops", title: "Infra maintenance", subtitle: "Check infrastructure health and scheduled upgrades.", offsetDays: 0, offsetHours: 1, unit: "hour", amount: 4 },
+        { subject: "Ops", title: "Cost review", subtitle: "Review usage and identify practical savings.", offsetDays: 5, offsetHours: 0, unit: "day", amount: 1 },
+        { subject: "Ops", title: "Incident drill", subtitle: "Practice response roles and recovery procedures.", offsetDays: 7, offsetHours: 2, unit: "hour", amount: 2 }
       ]
 
       events.forEach((e, i) => {
         this.insertEvent({
           id: String(i),
           title: e.title,
+          subtitle: e.subtitle,
           color: subjectColors[e.subject],
           term: {
             anchor: addCalendar(addCalendar(now, "day", e.offsetDays), "hour", e.offsetHours),
@@ -147,12 +148,10 @@ function AppPresentation({ parts, app }) {
           stationaryChildren={
             <>
               <parts.strokes.Background viewport={model.viewport} layout={model.layout} />
-              <parts.lists.Background {...model.lists} />
             </>
           }
         >
           <parts.strokes.Content frameWidth={frame.width} viewport={model.viewport} layout={model.layout} onCreate={draft => app.createEvent(draft)} />
-          <parts.lists.Content {...model.lists} />
           <parts.header.View {...model.header} frameWidth={frame.width} onNavigate={app.navigateHeader} />
         </ViewportSVG>
       )}

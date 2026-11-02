@@ -1,3 +1,4 @@
+import { strokeContentHeight } from './strokeGeometry.js'
 export const SCENE_WIDTH = 640
 export const SCENE_HEIGHT = 520
 
@@ -7,5 +8,5 @@ export function sceneX(x, displayWidth, sceneWidth = SCENE_WIDTH) {
 }
 
 export function phoneContentHeight(rowCount) {
-  return Math.max(SCENE_HEIGHT, 81 + rowCount * 40 + 8 + 110)
+  return strokeContentHeight(rowCount)
 }

@@ -17,8 +17,8 @@ Updated: 2026-10-21. Cookbook and the Temporal-backed P4/P5 implementation are v
 | Equal-width semantic cells and one continuous index/fraction map | Implemented/tested across all ten units, historical dates and DST. Fractions use actual elapsed time |
 | Forward/inverse mapping | Tested to <=1 millisecond; cell traversal and calendar arithmetic remain distinct |
 | Cursor-anchored zoom and center-anchored keyboard changes | Tested across all adjacent units/repeated cycles; no constant month ratios |
-| Header/grid/stroke/list alignment | Shared coordinates/boundaries; automated projection tests and Chrome DOM alignment checks pass |
-| Stroke/list routing uses source semantic granularity | User-approved rule: finer definedUnit -> list, equal/coarser -> stroke, independent of amount. Duration comparison is explicitly not the rule |
+| Header/grid/stroke alignment | Shared coordinates/boundaries; automated projection tests and Chrome DOM alignment checks pass |
+| Every event uses one stroke record | November 2 approval supersedes list routing; finer-unit and single-unit events use intersected-cell projection; listItems is empty |
 | Stroke envelope covers actual intersected cells | Implemented/tested for month ends/leap years/DST and exact exclusive ends; stored terms unchanged |
 | 640px frame; at least three settled unit-widths fit | Width 640/cell cap640/3 tested; dynamic rendered coverage prevents blank edges at smaller widths |
 | Provisional lanes remain provisional | assignRowsForUnit unchanged; no replacement Packing activation, cache redesign or new conflict rules |
@@ -29,4 +29,6 @@ Updated: 2026-10-21. Cookbook and the Temporal-backed P4/P5 implementation are v
 
 Physical Safari/macOS pinch, browser history/page zoom and animation paint nuances require device testing. Native SVG-ref use-gesture binding fixes the passive wheel listener failure reproduced in Chrome. A global CSS scale is only a local approximation across nonlinear semantic mappings; settled anchor/geometry tests pass.
 
-Existing row-cache loss, clipped/crowded lists and long-stroke offscreen labels are not fixed or approved invariants. Drafts retain current-viewport-at-submission behavior. Historical zone data depends on the host IANA database; far sub-day lookup cost depends on transitions enumerated by Temporal. Fractional event meanings remain deferred. The GitHub origin is https://github.com/rctdeclan/tgo.git and main tracks origin/main. Linux Cloud verification and tooling audit findings are recorded in CLOUD_BASELINE.md.
+Existing row-cache loss, dormant legacy clipped/crowded lists and long-stroke offscreen labels are not fixed or approved invariants. Drafts retain current-viewport-at-submission behavior. Historical zone data depends on the host IANA database; far sub-day lookup cost depends on transitions enumerated by Temporal. Fractional event meanings remain deferred. The GitHub origin is https://github.com/rctdeclan/tgo.git and main tracks origin/main. Linux Cloud verification and tooling audit findings are recorded in CLOUD_BASELINE.md.
+
+Current presentation invariants: 39px stroke body / 40px row pitch (1px gap); no checkmarks/outset borders; native-unit equality gives a border painted 2px inside; clipped title and descriptive subtitle; wider calendar-term gutters share Header/grid geometry without changing time mapping. See STROKE_PRESENTATION.md.

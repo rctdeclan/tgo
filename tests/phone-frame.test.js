@@ -35,9 +35,9 @@ test('phone resize and readable zoom preserve center and fit at least three unit
   }
 })
 
-test('phone content height includes every stroke row and the complete list section', () => {
+test('phone content height includes every stroke row without a list section', () => {
   assert.ok(phoneContentHeight(6) >= 520)
-  for (const rows of [8, 12, 30]) assert.ok(phoneContentHeight(rows) >= 81 + rows * 40 + 8 + 110)
+  for (const rows of [8, 12, 30]) assert.ok(phoneContentHeight(rows) >= 81 + rows * 40 + 8)
 })
 
 function find(element, predicate) {

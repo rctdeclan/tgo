@@ -56,14 +56,14 @@ test('events notify in memory and preserve supplied colors and unit-row hints', 
   assert.equal(strokes().events.length, 0)
 })
 
-test('current routing: sub-unit events enter lists, equal/larger durations remain strokes', () => {
+test('all events render as strokes, including finer and single-unit events', () => {
   const part = strokes()
   part.addEvent(event('short', 0, 2, 'hour'))
   part.addEvent(event('equal', 0))
   part.addEvent(event('long', 1, 3))
   const layout = part.getLayout('day', 0)
-  assert.deepEqual(Array.from(layout.listItems, item => item.id), ['short'])
-  assert.deepEqual(Array.from(layout.packed, item => [item.id, item.start, item.span]), [['equal', 0, 1], ['long', 1, 3]])
+  assert.equal(layout.listItems.length, 0)
+  assert.deepEqual(Array.from(layout.packed, item => [item.id, item.start, item.span]), [['equal', 0, 1], ['short', 0, 1], ['long', 1, 3]])
   assert.equal(layout.rowCount, 6)
 })
 
@@ -129,7 +129,7 @@ test('current keyboard step keeps center and readable cells in 640px frame', () 
   assert.ok(Math.abs(timeAt(after, 320) - timeAt(before, 320)) < 0.01)
 })
 
-test('real React initial render: 640px SVG, both background sections, session-only additions', () => {
+test('real React initial render: 640px SVG, one stroke background, session-only additions', () => {
   const load = createSourceLoader()
   const { App } = load('src/App.jsx')
   const first = new App()
@@ -140,5 +140,5 @@ test('real React initial render: 640px SVG, both background sections, session-on
   assert.equal(second.parts.strokes.events.length, 20)
   const html = renderToStaticMarkup(React.createElement(second.View))
   assert.match(html, /<svg[^>]*width="640"[^>]*height="520"/)
-  assert.equal((html.match(/<image /g) || []).length, 2)
+  assert.equal((html.match(/<image /g) || []).length, 1)
 })

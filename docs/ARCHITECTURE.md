@@ -1,6 +1,6 @@
 # TGO Architecture
 
-Updated: 2026-10-21. Cookbook and the corrected Temporal-backed P4/P5 work are implemented, tested and ready for review. compose.js is unchanged in the calendar phase. See COOKBOOK_PROGRESS.md for verification boundaries and remaining product defects.
+Updated: 2026-11-02. Cookbook and the corrected Temporal-backed P4/P5 work are implemented, tested and ready for review. compose.js is unchanged in the calendar phase. See COOKBOOK_PROGRESS.md for verification boundaries and remaining product defects.
 
 ## Compound Functions, Parts and Classes
 
@@ -33,9 +33,9 @@ src/main.jsx constructs App and mounts app.View. src/App.jsx registers Viewport,
 | --- | --- |
 | Canonical viewport state/navigation | ViewportPart owns one createViewport instance from src/state/viewport.js; shared Temporal coordinates and local calendar interval spans replace fixed-duration algorithms |
 | Event records and creation | StrokesPart owns its in-memory array and creates/inserts events through capabilities |
-| Projection and provisional placement | StrokesPart.getLayout uses semantic projection/routing; assignRowsForUnit remains unchanged; PackingPart is not activated as the lane algorithm |
+| Projection and provisional placement | StrokesPart.getLayout projects every event into strokes; assignRowsForUnit remains unchanged; PackingPart is not activated as the lane algorithm |
 | Header intervals/navigation | HeaderPart.present builds real calendar groups using the shared active coordinates; HeaderPart.navigate dispatches supplied targets |
-| Lists data | ListsPart.present selects supplied rowCount/listItems/viewport, with no sibling access |
+| Dormant Lists compatibility | ListsPart.present still receives supplied layout, with empty listItems; its Views are unmounted |
 | Shared presentation snapshot | Body.refresh calls wired capabilities once per update and publishes one consistent model to React subscribers |
 | Input and rendering | AppPresentation consumes the Body snapshot with useSyncExternalStore; Views dispatch supplied actions |
 | Hover/draft text/animations | Presentation-local hooks remain; they do not own canonical event or viewport state |
@@ -76,7 +76,7 @@ The production implementation rejects unknown commands. The example's command pa
 
 ## Presentation boundary
 
-Strokes Views receive viewport/layout/onCreate; Lists Views receive viewport/rowCount/listItems; Header receives groups/current-time data and onNavigate. They do not query siblings, reconstruct domain event records, or own navigation rules. Formatting and SVG geometry remain presentation calculations. ViewportSVG retains keyboard/gesture adapters and horizontal-only animation state. The keyboard scale calculation lives behind the viewport capability.
+Strokes Views receive viewport/layout/onCreate; Lists Views are currently unmounted; their dormant adapter receives viewport/rowCount/listItems; Header receives groups/current-time data and onNavigate. They do not query siblings, reconstruct domain event records, or own navigation rules. Formatting and SVG geometry remain presentation calculations. ViewportSVG retains keyboard/gesture adapters and horizontal-only animation state. The keyboard scale calculation lives behind the viewport capability.
 
 Draft text, hover, focus and effect-based visual transitions are permitted local state. Creation still resolves the selected relative cell against the current viewport at submission, preserving baseline behavior in this phase; changing in-progress draft semantics is not part of this migration. Body supplies the current timestamp when refreshing header presentation; no periodic clock feature is added.
 
@@ -84,9 +84,9 @@ Draft text, hover, focus and effect-based visual transitions are permitted local
 
 src/domain/calendar.js is the pure shared authority backed by @js-temporal/polyfill. Five generic operations (cellAt, nextCell, cellPosition, coordinate, instantAt) provide real half-open cells and one index/elapsed-fraction mapping. Small support helpers resolve wall-clock event addition/intervals and local input; labels share Amsterdam formatting. See CALENDAR.md for exact policies and data shapes.
 
-Viewport navigation inverts old coordinates at the cursor/center and solves the new offset for the same instant. Local coarse-cell spans replace fixed ratios; rendering coverage adapts at small widths. Header groups and stroke/list columns use the same origin cell/index. All layers retain the 640x520 SVG, original assets/style, three header rows where levels exist and provisional lanes.
+Viewport navigation inverts old coordinates at the cursor/center and solves the new offset for the same instant. Local coarse-cell spans replace fixed ratios; rendering coverage adapts at small widths. Header groups and stroke/list columns use the same origin cell/index. The logical scene remains 640 units wide, with three header rows where levels exist and provisional lanes. The desktop window is 640x520; tall SVG content now scrolls.
 
-Event storage is unchanged. Routing compares definedUnit ranks independently of amount; finer events go to lists, equal/coarser to strokes. Stroke coverage uses the actual interval's intersected cells with exact exclusive ends. StrokesPart validates positive integer amounts before mutation. Calendar additions use local wall time and retain valid anchor offsets; fractional event amounts are explicitly deferred. nextCell traversal and elapsed coordinate fractions are intentionally different operations.
+Event terms are unchanged; optional subtitle text is retained. The November 2 follow-up hides Lists and projects every event into strokes, including finer-than-display and one-unit items. The legacy rank helper remains unused by active layout. Stroke coverage uses the actual interval's intersected cells with exact exclusive ends. StrokesPart validates positive integer amounts before mutation. Calendar additions use local wall time and retain valid anchor offsets; fractional event amounts are explicitly deferred. nextCell traversal and elapsed coordinate fractions are intentionally different operations.
 
 The use-gesture adapter now binds non-passive listeners natively through the SVG ref, fixing a passive listener failure caught in Chrome; thresholds and Safari-specific listeners are retained. Pure helpers are not forced into Compound Functions. No sibling references, new class hierarchy, global scheduling store, Context or bus were introduced.
 
@@ -94,7 +94,7 @@ The use-gesture adapter now binds non-passive listeners natively through the SVG
 
 49 automated tests/build pass, including preserved Cookbook tests and timezone-independent calendar/header checks. Actual headless Chrome verifies render/input/creation/routing/header behavior and DOM column alignment without application errors; details are in TEMPORAL_MIGRATION.md. This is not physical Safari gesture certification or exhaustive visual regression testing.
 
-Existing lost row-cache writes, list clipping and offscreen labels on long strokes remain. Drafts still resolve against the current viewport at submission. No periodic clock, persistence, backend or replacement lane algorithm was added. Real calendar geometry necessarily differs from the removed synthetic 28-day month/336-day year. One CSS scaleX is only a local approximation across nonlinear calendar levels; settled geometry/anchor tests pass. Historical results depend on host IANA data, and very distant sub-day index lookups can enumerate many Temporal transitions.
+Existing lost row-cache writes and offscreen labels on long strokes remain. Legacy list clipping is dormant while Lists is unmounted. Drafts still resolve against the current viewport at submission. No periodic clock, persistence, backend or replacement lane algorithm was added. Real calendar geometry necessarily differs from the removed synthetic 28-day month/336-day year. One CSS scaleX is only a local approximation across nonlinear calendar levels; settled geometry/anchor tests pass. Historical results depend on host IANA data, and very distant sub-day index lookups can enumerate many Temporal transitions.
 
 ## Cloud handoff
 
@@ -115,3 +115,8 @@ LandscapeTools adds presentation-local clipboard state and two black landscape-o
 ## Named day parts and bounded labels
 
 The dayPart zoom level uses unique coordinate ownership cells and separate approved named windows. Evening and Night overlap across midnight; headers and event intervals use those windows while coordinates/traversal retain a partition. Fortnight labels number starts within each year without rebucketing dates. Event/list text is clipped to explicit SVG viewports, and the supplied JPEG replaces the icon stroke backdrop. See DAY_PARTS_AND_LABELS.md for the updated semantics and tests.
+
+
+## Current stroke presentation
+
+See [STROKE_PRESENTATION.md](STROKE_PRESENTATION.md). All event intervals use half-open intersected-cell projection with a minimum span of one cell. Existing assignRowsForUnit placement is unchanged. Rows use 39px bodies on 40px pitch. Native-unit equality alone controls a border painted 2px inside the event rectangle; checkmarks/outset borders are removed. Titles and descriptive subtitles occupy separate clipped lines. Shared pure strokeGeometry helpers create wider calendar-term gutters in Header and grid without changing time maps. Multi-cell bodies remain continuous through interior boundaries.

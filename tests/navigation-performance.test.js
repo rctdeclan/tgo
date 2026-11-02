@@ -30,7 +30,8 @@ test('cached layout refreshes for inserted events and changed origin/unit', () =
   assert.notEqual(inserted, empty)
   assert.equal(inserted.packed.length, 1)
   assert.equal(layout({ ...vp, worldOriginTime: nextCell(cellAt(origin, 'day')).start }).packed[0].start, -1)
-  assert.equal(layout({ ...vp, unit: 'month' }).listItems.length, 1)
+  assert.equal(layout({ ...vp, unit: 'month' }).packed.length, 1)
+  assert.equal(layout({ ...vp, unit: 'month' }).listItems.length, 0)
 })
 
 test('cached headers update current-period tint and newly exposed geometry', () => {

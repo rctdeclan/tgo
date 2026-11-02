@@ -1,17 +1,16 @@
 
 import React, { useRef, useState } from "react"
-import { project, isListEvent } from "../domain/projection"
+import { project } from "../domain/projection"
 import { UNIT_ORDER, cellAt, nextCell, eventInterval } from "../domain/calendar"
+import { ROW_PITCH, STROKE_HEIGHT, STROKES_TOP, cellBox, strokeContentHeight } from "../ui/strokeGeometry"
 import bg from "../assets/strokes-background.jpg"
 
 const BASE_WIDTH=120
-const ROW_HEIGHT=40
-const CELL_HEIGHT=30
-const GAP=14
+const ROW_HEIGHT=ROW_PITCH
+const CELL_HEIGHT=STROKE_HEIGHT
 const VISIBLE=40
 const MIN_GRID_ROWS=6
-const STROKES_Y=81
-const LISTS_GAP=8
+const STROKES_Y=STROKES_TOP
 const FRAME_WIDTH=640
 
 export class StrokesPart {
@@ -47,6 +46,7 @@ export class StrokesPart {
       const event = {
         id: globalThis.crypto?.randomUUID?.() || `event-${Date.now()}`,
         title,
+        subtitle: draft.subtitle?.trim() || '',
         positionsByUnit: { [viewport.unit]: draft.row },
         term: {
           anchor: nextCell(cellAt(viewport.worldOriginTime, viewport.unit), draft.start).start,
@@ -137,15 +137,6 @@ export class StrokesPart {
 
     this.events.forEach(e=>{
       const projection = project(e.term, unit, worldOriginTime)
-      if(isListEvent(e.term.definedUnit, unit)){
-        listItems.push({
-          id: e.id,
-          title: e.title,
-          start: projection.start,
-          anchor: e.term.anchor
-        })
-        return
-      }
 
       visible.push({
         ...e,
@@ -163,7 +154,7 @@ export class StrokesPart {
   }
 
   Background = ({ viewport: vp, layout: { rowCount } }) => {
-    const timelineHeight = STROKES_Y + rowCount*ROW_HEIGHT + LISTS_GAP
+    const timelineHeight = strokeContentHeight(rowCount)
 
     return (
       <image
@@ -191,14 +182,17 @@ export class StrokesPart {
     // Keep the model's coverage, but mount only visible grid cells plus a buffer.
     const firstColumn = Math.max(-half, Math.floor((-frameWidth / 2 - vp.worldOffsetPx) / cellWidth) - 1)
     const lastColumn = Math.min(half - 1, Math.ceil((frameWidth / 2 - vp.worldOffsetPx) / cellWidth) + 1)
-    const gridColumns = Array.from({ length: lastColumn - firstColumn + 1 }, (_, i) => firstColumn + i + half)
-
-    const cellBodyWidth = Math.max(1, cellWidth - GAP)
+    const origin = cellAt(vp.worldOriginTime, vp.unit)
+    const gridColumns = Array.from({ length: lastColumn - firstColumn + 1 }, (_, i) => {
+      const idx = firstColumn + i + half
+      return { idx, box: cellBox(origin, idx - half, 1, cellWidth) }
+    })
+    const cellBodyWidth = Math.max(1, cellWidth - 4)
     const inputWidth = Math.min(frameWidth - 16, Math.max(120, cellBodyWidth))
     const inputX = draft && frameWidth < FRAME_WIDTH
       ? Math.max(-frameWidth / 2 - vp.worldOffsetPx + 8,
-        Math.min(draft.start * cellWidth + GAP / 2, frameWidth / 2 - vp.worldOffsetPx - inputWidth - 8))
-      : draft?.start * cellWidth + GAP / 2
+        Math.min(cellBox(origin, draft.start, 1, cellWidth).x, frameWidth / 2 - vp.worldOffsetPx - inputWidth - 8))
+      : draft ? cellBox(origin, draft.start, 1, cellWidth).x : 0
 
     const buildDraftKey = (row, start) => {
       return `${row}:${start}`
@@ -241,13 +235,14 @@ export class StrokesPart {
         {Array.from({length:rowCount}).map((_,row)=>(
           <svg
             key={`grid-row-${row}`}
+            data-grid-row={row}
             x={worldLeft}
             y={row*ROW_HEIGHT}
             width={worldWidth}
             height={CELL_HEIGHT}
           >
-            {gridColumns.map(idx=>{
-              const x = idx*cellWidth
+            {gridColumns.map(({ idx, box })=>{
+              const x = box.x + half * cellWidth
               const cellKey = `${row}-${idx}`
               const isHovered = hoveredCellKey === cellKey
               return (
@@ -258,22 +253,18 @@ export class StrokesPart {
                   onClick={() => openDraft(row, idx - half)}
                   style={{ cursor: "text" }}
                 >
+                  <rect x={idx * cellWidth} y={0} width={cellWidth} height={CELL_HEIGHT} fill="transparent" />
                   <rect
-                    x={x + GAP/2}
+                    data-unit-cell={idx - half}
+                    data-term-start={box.termStart ? 'true' : undefined}
+                    x={x}
                     y={0}
-                    width={cellBodyWidth}
+                    width={box.width}
                     height={CELL_HEIGHT}
                     fill={isHovered ? "#6A7075" : "#575C61"}
                     fillOpacity={1}
                   />
-                  <rect
-                    x={x + cellWidth - GAP/2}
-                    y={0}
-                    width={GAP}
-                    height={CELL_HEIGHT}
-                    fill={isHovered ? "#6A7075" : "#4F4F4F"}
-                    fillOpacity={isHovered ? 0.65 : 0.4}
-                  />
+
                 </g>
               )
             })}
@@ -336,61 +327,27 @@ export class StrokesPart {
           </foreignObject>
         )}
 
-        {packed.map(e=>(
-          (() => {
-            const eventWidth = Math.max(1, e.span*cellWidth - GAP)
-            const isNativeUnit = e.term.definedUnit === vp.unit
-            const outerInset = 3
-            const frameInset = isNativeUnit ? outerInset : 0
-
-            return (
-              <svg
-                key={e.id}
-                x={e.start*cellWidth + GAP/2 - frameInset}
-                y={e.row*ROW_HEIGHT - frameInset}
-                width={Math.max(1, e.span*cellWidth) + frameInset * 2}
-                height={CELL_HEIGHT + frameInset * 2}
-                style={{ overflow: "visible" }}
-              >
-                {isNativeUnit && (
-                  <rect
-                    x={0}
-                    y={0}
-                    width={eventWidth + outerInset * 2}
-                    height={CELL_HEIGHT + outerInset * 2}
-                    fill="none"
-                    stroke={e.color}
-                    strokeWidth="6"
-                    opacity="0.9"
-                  />
-                )}
-                <rect
-                  x={frameInset}
-                  y={frameInset}
-                  width={eventWidth}
-                  height={CELL_HEIGHT}
-                  fill="#dcdcdc"
-                  stroke={e.color}
-                  strokeWidth="4"
-                />
-
-                {/* checkbox */}
-                <path d="M18 0L0 0L0 18L18 18L18 0ZM15 15L3 15L3 3L15 3L15 15Z" fill={e.color} fillRule="nonzero" opacity="1" stroke="none" transform={`translate(${frameInset + 5},${frameInset + 6})`}/>
-
-
-
-
-                <title>{e.title}</title>
-                <svg data-event-label={e.id}
-                  x={frameInset + 28} y={frameInset}
-                  width={Math.max(0, eventWidth - 36)} height={CELL_HEIGHT}
-                  style={{ overflow: 'hidden', pointerEvents: 'none' }}>
-                  <text x={0} y={21} fontSize="18" fill={e.color} fontFamily="Futura">{e.title}</text>
-                </svg>
+        {packed.map(e => {
+          const box = cellBox(origin, e.start, e.span, cellWidth)
+          const isNativeUnit = e.term.definedUnit === vp.unit
+          return (
+            <svg key={e.id} data-event-line={e.id}
+              x={box.x} y={e.row * ROW_HEIGHT} width={box.width} height={CELL_HEIGHT}
+              style={{ overflow: 'hidden' }}>
+              <title>{[e.title, e.subtitle].filter(Boolean).join(' — ')}</title>
+              <rect data-event-body={e.id} x={0} y={0} width={box.width} height={CELL_HEIGHT} fill="#dcdcdc" />
+              {isNativeUnit && box.width > 6 && <rect data-native-border={e.id}
+                x={3} y={3} width={box.width - 6} height={CELL_HEIGHT - 6}
+                fill="none" stroke={e.color} strokeWidth={2} />}
+              <svg data-event-label={e.id} x={8} y={0}
+                width={Math.max(0, box.width - 16)} height={CELL_HEIGHT}
+                style={{ overflow: 'hidden', pointerEvents: 'none' }}>
+                <text data-event-title={e.id} x={0} y={16} fontSize="15" fontWeight="500" fill={e.color} fontFamily="Futura">{e.title}</text>
+                <text data-event-subtitle={e.id} x={0} y={31} fontSize="11" fill="#53575c" fontFamily="Futura">{e.subtitle || ''}</text>
               </svg>
-            )
-          })()
-        ))}
+            </svg>
+          )
+        })}
       </g>
     )
   }

@@ -8,7 +8,7 @@ const load = createSourceLoader()
 const { project, isListEvent } = load('src/domain/projection.js')
 const { StrokesPart } = load('src/parts/StrokesPart.jsx')
 
-test('approved month-view examples: granularity routing independent of interval length', () => {
+test('month-view projection keeps finer-unit events as strokes', () => {
   const part = new StrokesPart()
   part.addEvent(event('jan-month', '2023-01-31', 'month'))
   part.addEvent(event('feb-leap', '2024-01-31', 'month'))
@@ -20,7 +20,10 @@ test('approved month-view examples: granularity routing independent of interval 
   assert.deepEqual([byId('jan-month').start, byId('jan-month').span], [0, 2])
   assert.deepEqual([byId('march-month').start, byId('march-month').span], [2, 1])
   assert.equal(byId('feb-leap').span, 2)
-  assert.deepEqual(Array.from(model.listItems, item => item.id), ['march-28-days', 'march-31-days'])
+  assert.equal(model.listItems.length, 0)
+  assert.deepEqual([byId('march-28-days').start, byId('march-28-days').span], [2, 1])
+  assert.deepEqual([byId('march-31-days').start, byId('march-31-days').span], [2, 2])
+  // Legacy rank helper remains available; active layout no longer routes into lists.
   assert.equal(isListEvent('day', 'month'), true)
   assert.equal(isListEvent('month', 'month'), false)
   assert.equal(isListEvent('year', 'month'), false)
@@ -53,14 +56,17 @@ test('month events project into real days/weeks; DST events align with header ce
 test('each event routes exactly once at every level, including long finer-unit intervals', () => {
   const part = new StrokesPart()
   for (const [i, unit] of UNIT_ORDER.entries()) part.addEvent(event(String(i), '2026-10-25T01:30', unit, 31))
-  for (const [index, unit] of UNIT_ORDER.entries()) {
+  for (const unit of UNIT_ORDER) {
     const model = part.getLayout(unit, at('2026-10-01'))
     const ids = [...model.packed, ...model.listItems].map(item => item.id)
     assert.equal(ids.length, 10)
     assert.equal(new Set(ids).size, 10)
-    assert.equal(model.listItems.length, index)
-    assert.equal(model.packed.length, 10 - index)
-    for (const item of model.listItems) assert.equal(item.start, cellAt(at('2026-10-25T01:30'), unit).index - cellAt(at('2026-10-01'), unit).index)
+    assert.equal(model.listItems.length, 0)
+    assert.equal(model.packed.length, 10)
+    for (const item of model.packed) {
+      assert.equal(item.start, cellAt(at('2026-10-25T01:30'), unit).index - cellAt(at('2026-10-01'), unit).index)
+      assert.ok(item.span >= 1)
+    }
   }
 })
 

@@ -1,6 +1,6 @@
 # Temporal Calendar and Coordinates
 
-Implemented: 2026-10-21. The corrected Temporal task and subsequent user replies supersede the earlier pending-policy proposals. Calendar calculations are pure helpers in src/domain/calendar.js, shared by navigation, headers, projection and lists. @js-temporal/polyfill 0.5.1 is the authority; there is no custom Gregorian or timezone-rule engine.
+Implemented: 2026-10-21. The corrected Temporal task and subsequent user replies supersede the earlier pending-policy proposals. Calendar calculations are pure helpers in src/domain/calendar.js, shared by navigation, headers and projection. @js-temporal/polyfill 0.5.1 is the authority; there is no custom Gregorian or timezone-rule engine.
 
 ## Representation and small API
 
@@ -58,10 +58,10 @@ The viewport inverts its old mapping at the cursor, then solves the new offset f
 
 src/domain/projection.js separates these concerns:
 
-- Routing compares UNIT_ORDER ranks only. A finer definedUnit always goes to lists, regardless of amount; equal/coarser units are strokes. Source granularity is never inferred from duration.
+- Current presentation (2026-11-02) projects every event into strokes, including finer-than-display and one-unit events. Lists are unmounted and listItems is empty. The legacy isListEvent rank helper remains compatibility-only; amount determines interval extent, not routing.
 - A stroke covers every displayed cell intersected by its actual event interval. The first cell contains start; the last contains end-1 millisecond, preserving exact exclusive-end behavior without floating-point epsilon guesses.
-- January 31 +1 month spans January and February month cells. March 1 +1 month occupies March only. March 1 +28 days and March 15 +31 days both go to month-view lists.
-- List entries occur once in their anchor's displayed-unit column, preserving source insertion order. A long finer-unit event is still a single list entry, not duplicated across its duration.
+- January 31 +1 month spans January and February month cells. March 1 +1 month occupies March only. March 1 +28 days occupies one month-view stroke cell; March 15 +31 days intersects two month cells.
+- Each event produces one projected stroke record. Finer-unit events cover their intersected cells, using at least one displayed cell.
 - Canonical records are unchanged. Projected interval geometry feeds the existing assignRowsForUnit algorithm; no lane redesign or derived row-cache fix was introduced.
 
 Header grouping iterates actual calendar cells, projects their boundaries and uses the same Amsterdam labels/ISO week data. Existing three-row styling, current-period colors, hover, chips and clicks remain; coarse zooms still have fewer available levels. List indicators use the same timezone. Week-of-month indicator text retains the existing day-1..7 bucket convention rather than silently introducing another list-label design.
@@ -73,3 +73,5 @@ See TEMPORAL_MIGRATION.md for tests, build, real Chrome smoke results and file i
 Primary references: [Temporal.ZonedDateTime](https://tc39.es/proposal-temporal/docs/zoneddatetime.html), [Temporal polyfill](https://github.com/js-temporal/temporal-polyfill).
 
 The latest approved day-part windows, ownership/event distinctions and annual Fortnight x labels are documented in DAY_PARTS_AND_LABELS.md; they supersede the earlier six-four-hour-group display.
+
+Visual cell gutters widen at higher-term boundaries without altering coordinates, arithmetic or zoom anchors. See STROKE_PRESENTATION.md for the current presentation rules.

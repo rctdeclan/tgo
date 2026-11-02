@@ -18,7 +18,7 @@ export function ViewportSVG({children, stationaryChildren, config, viewport: vp,
   const keyboardTransformTimeoutRef = useRef(null)
   const { bind } = useTrackpadTimeline(vp, {
     width: WIDTH,
-    allowVerticalScroll: mobile,
+    allowVerticalScroll: mobile || frameHeight > HEIGHT,
     minScale: config?.zoomLower ?? 0.5,
     maxScale: config?.zoomUpper ?? 2
   })
@@ -144,7 +144,7 @@ export function ViewportSVG({children, stationaryChildren, config, viewport: vp,
          role="group"
          aria-label="Interactive calendar"
          style={{
-           touchAction: mobile ? "pan-y" : "none",
+           touchAction: mobile || frameHeight > HEIGHT ? "pan-y" : "none",
            overscrollBehavior: "none",
            WebkitUserSelect: "none",
            userSelect: "none"
