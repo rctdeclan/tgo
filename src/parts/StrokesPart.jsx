@@ -2,7 +2,8 @@
 import React, { useRef, useState } from "react"
 import { project } from "../domain/projection"
 import { UNIT_ORDER, cellAt, nextCell, eventInterval } from "../domain/calendar"
-import { ROW_PITCH, STROKE_HEIGHT, STROKES_TOP, cellBox, strokeContentHeight } from "../ui/strokeGeometry"
+import { unitLabel } from "../domain/labels"
+import { ROW_PITCH, STROKE_HEIGHT, STROKES_TOP, boundaryGap, cellBox, eventBox, strokeContentHeight } from "../ui/strokeGeometry"
 import bg from "../assets/strokes-background.jpg"
 
 const BASE_WIDTH=120
@@ -185,8 +186,15 @@ export class StrokesPart {
     const origin = cellAt(vp.worldOriginTime, vp.unit)
     const gridColumns = Array.from({ length: lastColumn - firstColumn + 1 }, (_, i) => {
       const idx = firstColumn + i + half
-      return { idx, box: cellBox(origin, idx - half, 1, cellWidth) }
+      const cell = nextCell(origin, idx - half)
+      return { idx, box: cellBox(origin, idx - half, 1, cellWidth),
+        label: unitLabel(cell.start, vp.unit), gap: boundaryGap(nextCell(cell), cellWidth) }
     })
+    const eventsByRow = new Map()
+    for (const event of packed) {
+      if (!eventsByRow.has(event.row)) eventsByRow.set(event.row, [])
+      eventsByRow.get(event.row).push(event)
+    }
     const cellBodyWidth = Math.max(1, cellWidth - 4)
     const inputWidth = Math.min(frameWidth - 16, Math.max(120, cellBodyWidth))
     const inputX = draft && frameWidth < FRAME_WIDTH
@@ -241,10 +249,12 @@ export class StrokesPart {
             width={worldWidth}
             height={CELL_HEIGHT}
           >
-            {gridColumns.map(({ idx, box })=>{
+            {gridColumns.map(({ idx, box, label, gap })=>{
               const x = box.x + half * cellWidth
               const cellKey = `${row}-${idx}`
               const isHovered = hoveredCellKey === cellKey
+              const column = idx - half
+              const occupied = eventsByRow.get(row)?.some(event => column >= event.start && column < event.start + event.span)
               return (
                 <g
                   key={`grid-${row}-${idx}`}
@@ -264,7 +274,14 @@ export class StrokesPart {
                     fill={isHovered ? "#6A7075" : "#575C61"}
                     fillOpacity={1}
                   />
-
+                  <rect data-glass-divider={column}
+                    x={(idx + 1) * cellWidth - gap / 2} y={0} width={gap} height={CELL_HEIGHT}
+                    fill={isHovered ? '#6A7075' : '#4F4F4F'} fillOpacity={isHovered ? 0.65 : 0.4}
+                    pointerEvents="none" />
+                  {!occupied && <svg data-cell-unit={column} x={x} y={0} width={box.width} height={CELL_HEIGHT}
+                    style={{ overflow: 'hidden', pointerEvents: 'none' }}>
+                    <text x={8} y={23} fontSize="11" fill="#fff" fillOpacity={0.38} fontFamily="Futura">{label}</text>
+                  </svg>}
                 </g>
               )
             })}
@@ -328,22 +345,18 @@ export class StrokesPart {
         )}
 
         {packed.map(e => {
-          const box = cellBox(origin, e.start, e.span, cellWidth)
-          const isNativeUnit = e.term.definedUnit === vp.unit
+          const box = eventBox(origin, e, vp.unit, cellWidth)
           return (
-            <svg key={e.id} data-event-line={e.id}
-              x={box.x} y={e.row * ROW_HEIGHT} width={box.width} height={CELL_HEIGHT}
+            <svg key={e.id} data-event-line={e.id} data-native-inset={box.native ? 'true' : undefined}
+              x={box.x} y={e.row * ROW_HEIGHT + box.y} width={box.width} height={box.height}
               style={{ overflow: 'hidden' }}>
               <title>{[e.title, e.subtitle].filter(Boolean).join(' — ')}</title>
-              <rect data-event-body={e.id} x={0} y={0} width={box.width} height={CELL_HEIGHT} fill="#dcdcdc" />
-              {isNativeUnit && box.width > 6 && <rect data-native-border={e.id}
-                x={3} y={3} width={box.width - 6} height={CELL_HEIGHT - 6}
-                fill="none" stroke={e.color} strokeWidth={2} />}
+              <rect data-event-body={e.id} x={0} y={0} width={box.width} height={box.height} fill="#dcdcdc" />
               <svg data-event-label={e.id} x={8} y={0}
-                width={Math.max(0, box.width - 16)} height={CELL_HEIGHT}
+                width={Math.max(0, box.width - 16)} height={box.height}
                 style={{ overflow: 'hidden', pointerEvents: 'none' }}>
-                <text data-event-title={e.id} x={0} y={16} fontSize="15" fontWeight="500" fill={e.color} fontFamily="Futura">{e.title}</text>
-                <text data-event-subtitle={e.id} x={0} y={31} fontSize="11" fill="#53575c" fontFamily="Futura">{e.subtitle || ''}</text>
+                <text data-event-title={e.id} x={0} y={box.native ? 14 : 16} fontSize="15" fontWeight="500" fill={e.color} fontFamily="Futura">{e.title}</text>
+                <text data-event-subtitle={e.id} x={0} y={box.native ? 28 : 31} fontSize="11" fill="#53575c" fontFamily="Futura">{e.subtitle || ''}</text>
               </svg>
             </svg>
           )

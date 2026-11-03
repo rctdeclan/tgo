@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { cellAt, nextCell, fromLocal, UNIT_ORDER } from '../src/domain/calendar.js'
-import { boundaryGap, cellBox, startsTerm } from '../src/ui/strokeGeometry.js'
+import { boundaryGap, cellBox, eventBox, startsTerm, STROKE_HEIGHT } from '../src/ui/strokeGeometry.js'
 import { createSourceLoader } from './helpers/load-source.js'
 
 const cell = (date, unit) => cellAt(fromLocal(date), unit)
@@ -43,7 +43,23 @@ test('gutters preserve semantic positions and remain usable at narrow zoom and D
   assert.equal(startsTerm(nextCell(cell('2026-03-29', 'day'), 1)), true)
 })
 
-test('native-unit borders apply to multi-unit events; text and all finer items stay in strokes', () => {
+test('native-unit event rectangles inset on all sides, independently of amount', () => {
+  const origin = cell('2026-11-02', 'day')
+  for (const amount of [1, 2, 5]) {
+    const event = { start: 0, span: amount, term: { definedUnit: 'day', amount } }
+    const cells = cellBox(origin, 0, amount, 120)
+    const box = eventBox(origin, event, 'day', 120)
+    assert.equal(box.x - cells.x, 2)
+    assert.equal(cells.x + cells.width - box.x - box.width, 2)
+    assert.equal(box.y, 2)
+    assert.equal(STROKE_HEIGHT - box.y - box.height, 2)
+    const other = eventBox(origin, { ...event, term: { definedUnit: 'hour' } }, 'day', 120)
+    assert.deepEqual([other.x, other.width, other.y, other.height], [cells.x, cells.width, 0, STROKE_HEIGHT])
+    assert.ok(eventBox(origin, event, 'day', 0.5).width > 0)
+  }
+})
+
+test('strokes embed empty-unit labels and glass dividers, with no header or colored outlines', () => {
   const load = createSourceLoader()
   const part = new (load('src/parts/StrokesPart.jsx').StrokesPart)()
   const origin = fromLocal('2026-11-02')
@@ -56,12 +72,26 @@ test('native-unit borders apply to multi-unit events; text and all finer items s
   }))
   assert.equal(layout.listItems.length, 0)
   assert.equal((html.match(/data-event-line=/g) || []).length, 3)
-  assert.match(html, /data-native-border="native"[^>]*x="3"[^>]*y="3"/)
-  assert.doesNotMatch(html, /data-native-border="(?:fine|coarse)"|<path/)
+  assert.match(html, /data-event-line="native" data-native-inset="true"/)
+  assert.doesNotMatch(html, /data-native-border=|stroke=|<path/)
+  assert.match(html, /data-glass-divider=/)
+  assert.match(html, /data-cell-unit=/)
   for (const id of ['native', 'fine', 'coarse']) {
     assert.match(html, new RegExp(`data-event-title="${id}"`))
     assert.match(html, new RegExp(`data-event-subtitle="${id}"[^>]*>Description ${id}<`))
   }
   const app = new (load('src/App.jsx').App)()
   assert.ok(app.parts.strokes.events.every(event => event.title && event.subtitle))
+  const appHtml = renderToStaticMarkup(React.createElement(app.View))
+  assert.doesNotMatch(appHtml, /M0 7L7 14|Fortnight |Week /)
+})
+
+test('short stroke unit labels omit parent terms and retain repeated-hour offsets', () => {
+  const { unitLabel } = createSourceLoader()('src/domain/labels.js')
+  const at = fromLocal('2026-11-03T12:15')
+  const expected = { year: '2026', quarter: 'Q4', month: 'Nov', fortnight: 'F22', week: 'W45', day: '3 Tue', dayPart: 'Noon', hour: '12:15', fifteenMinute: '12:15', minute: '12:15' }
+  for (const [unit, label] of Object.entries(expected)) assert.equal(unitLabel(at, unit), label)
+  const repeated = cell('2026-10-25T02:00', 'hour')
+  assert.match(unitLabel(repeated.start, 'hour'), /02:00 \+02:00/)
+  assert.match(unitLabel(nextCell(repeated).start, 'hour'), /02:00 \+01:00/)
 })

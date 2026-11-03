@@ -1,6 +1,6 @@
 import { UNIT_ORDER, DAY_PARTS, cellAt, nextCell, zoned } from '../domain/calendar.js'
 
-export const STROKES_TOP = 81
+export const STROKES_TOP = 0
 export const ROW_PITCH = 40
 export const STROKE_HEIGHT = 39
 export const NORMAL_GAP = 4
@@ -33,6 +33,14 @@ export function cellBox(origin, index, span, cellWidth) {
   const left = boundaryGap(first, cellWidth) / 2
   const right = boundaryGap(after, cellWidth) / 2
   return { x: index * cellWidth + left, width: Math.max(0, span * cellWidth - left - right), termStart: startsTerm(first) }
+}
+export function eventBox(origin, event, unit, cellWidth) {
+  const box = cellBox(origin, event.start, event.span, cellWidth)
+  const native = event.term.definedUnit === unit
+  const insetX = native ? Math.min(2, box.width / 4) : 0
+  const insetY = native ? 2 : 0
+  return { x: box.x + insetX, y: insetY, width: box.width - insetX * 2,
+    height: STROKE_HEIGHT - insetY * 2, native }
 }
 export function strokeContentHeight(rowCount) {
   return Math.max(520, STROKES_TOP + rowCount * ROW_PITCH + 8)

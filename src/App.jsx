@@ -152,7 +152,6 @@ function AppPresentation({ parts, app }) {
           }
         >
           <parts.strokes.Content frameWidth={frame.width} viewport={model.viewport} layout={model.layout} onCreate={draft => app.createEvent(draft)} />
-          <parts.header.View {...model.header} frameWidth={frame.width} onNavigate={app.navigateHeader} />
         </ViewportSVG>
       )}
     </TimelineFrame>

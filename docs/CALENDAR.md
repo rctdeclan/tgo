@@ -64,7 +64,7 @@ src/domain/projection.js separates these concerns:
 - Each event produces one projected stroke record. Finer-unit events cover their intersected cells, using at least one displayed cell.
 - Canonical records are unchanged. Projected interval geometry feeds the existing assignRowsForUnit algorithm; no lane redesign or derived row-cache fix was introduced.
 
-Header grouping iterates actual calendar cells, projects their boundaries and uses the same Amsterdam labels/ISO week data. Existing three-row styling, current-period colors, hover, chips and clicks remain; coarse zooms still have fewer available levels. List indicators use the same timezone. Week-of-month indicator text retains the existing day-1..7 bucket convention rather than silently introducing another list-label design.
+The dormant Header model iterates actual calendar cells and projects their boundaries. Its View is unmounted; active-unit labels are now embedded in empty stroke cells using shared Amsterdam formatting. Parent-term text is absent; wider glass-divider gutters signal term bounds. List indicators use the same timezone. Week-of-month indicator text retains the existing day-1..7 bucket convention rather than silently introducing another list-label design.
 
 ## Evidence and remaining limits
 

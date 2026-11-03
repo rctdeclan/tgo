@@ -1,31 +1,41 @@
 # Current stroke presentation
 
-Approved follow-up implemented on main, 2026-11-02. This supersedes earlier requirements for finer-unit list routing, decorative checkmarks and outset native-unit outlines. The separate temporary header study is untouched.
+Updated on main, 2026-11-03. The latest user correction supersedes the separate three-row Header and November 2 colored inset outline. Lists remain hidden. The separate temporary header study is untouched.
 
-## Routing and text
+## Units inside strokes
 
-The Lists Views are unmounted for now. Every event projects once into strokes, including one-unit items and events defined in a finer unit than the active display. The existing half-open intersected-cell projection covers at least one cell; interval amount controls its extent. No duration/rank split sends items into a list. ListsPart and its Body-wired presentation capability remain dormant for compatibility, with listItems empty. The legacy isListEvent helper is not called by active layout.
+The Header View is unmounted and strokes start at y=0, without reserving header space. Every empty cell in every stroke row displays a short, faint white indication of its active unit. Labels are clipped inside their cell: examples include `3 Tue`, `12:00`, `Morn`, `Noon`, `Aft`, `Eve`, `Night`, `W45`, `F22`, `Nov`, `Q4` and `2026`. Quarter labels omit the parent year; week/fortnight labels use short prefixes. Repeated hours retain UTC offsets so the two occurrences remain distinguishable. Labels are computed once per rendered column, then reused across rows. Occupied cells omit these unit labels.
 
-Each eventline displays a title and a smaller descriptive subtitle in separately bounded SVG text lines, clipped to the event rectangle. All twenty seeded events include example descriptions. The SVG title contains the full title and description for pointer inspection. Creation accepts optional subtitle text through the existing creation capability; the inline editor still supplies only a title, so newly created descriptions start empty. No subtitle editing interface was requested or added.
+Parent-term names are absent from the stroke area. Larger spaces at term bounds supply that hierarchy. Existing keyboard, gestures and command controls continue navigation; the old Header click targets are no longer rendered. HeaderPart and its Body-wired model/navigation capabilities remain available but dormant in presentation. Body still refreshes its compatibility model; removing that work is a possible later cleanup.
 
-## Geometry
+Multiple groups of strokes, each with independently displayed units, are a future plan. This implementation still has one viewport/unit across its rows; no group-management model or new orchestration was added.
 
-- Rows retain their 40px pitch. Grid cells and stroke bodies are 39px high, leaving exactly 1px between rows.
-- Decorative checkmarks and outset outlines are removed.
-- Only exact equality between definedUnit and displayed unit enables the native outline. Amount is irrelevant: a two-day event has the outline in day view. The 2px stroke path sits at x/y=3 within the event rectangle, painting its outer edge 2px inside; the same inset applies on all sides. Other units have no outline.
-- Ordinary horizontal cell boundaries have 4px visual gutters; term boundaries have 12px gutters. Gutters clamp to 20%/50% of cell width at very narrow zoom, keeping cells positive. Both adjacent cells contribute half the gutter.
-- Pure shared strokeGeometry helpers supply grid, event outer bounds, draft placement and Header gaps. The existing coordinate/inverse mapping is unchanged: gutters remove painted area inside cells, without inserting time or shifting zoom anchors. Multi-cell events stay continuous across interior boundaries.
-- A term boundary is an exact start of a higher displayed calendar unit. Thus day view separates Sunday/Monday more widely, month view separates quarters, and quarter view separates years. Day parts also separate the Morning cycle start; fortnights separate the first start within a calendar year; years separate decades. Other coincident higher-term starts, such as a month boundary in day view, also widen the gutter. This follows real Temporal boundaries, including DST and negative indices.
-- The desktop window remains 640x520; tall stroke content grows and scrolls vertically. Phone portrait/landscape keeps its unscaled scene crop, controls and black landscape rails. The uploaded polygon image remains behind the strokes.
+## Event routing and text
 
-The existing assignRowsForUnit algorithm and its per-unit hints are unchanged. Events may still share a row when their intervals do not overlap; this is not a packing redesign.
+Every event projects once into strokes, including one-unit and finer-than-display items. Existing half-open intersected-cell projection covers at least one cell; amount determines interval extent. ListsPart remains wired for compatibility with empty listItems; its Views are unmounted. The legacy isListEvent helper is unused by active layout.
+
+Eventlines retain title and smaller descriptive subtitle, separately clipped to the rectangle. All twenty examples have descriptions. The SVG title includes both full strings for pointer inspection. The creation capability accepts optional subtitle text; the inline editor still supplies title only, so new descriptions start empty.
+
+## Geometry and glass dividers
+
+- Grid rows have 40px pitch and 39px cells, leaving 1px between rows.
+- Matching-unit eventlines inset the entire filled rectangle on all four sides of its surrounding cell-area rectangle. The normal inset is 2px, giving a 35px-high body at y=row*40+2. For example, a two-day event is inset in day view; amount does not control eligibility. Its horizontal inset is capped at one quarter of body width only at extremely narrow zoom to preserve a positive rectangle. Other-unit eventlines fill their projected cell-area bounds. There are no colored borders, outset outlines or checkmarks. Text moves inward with the rectangle.
+- Ordinary cell boundaries have 4px gutters and term boundaries 12px gutters, clamped to 20%/50% of cell width at narrow zoom. Both neighboring cells contribute half the gutter.
+- The original glass treatment is restored: each cell boundary has a translucent `#4F4F4F` band at 0.4 opacity over the uploaded background image (0.65 with hover tint). Term boundaries have wider bands. These bands are part of the underlying grid; continuous multi-cell eventlines cover interior boundaries.
+- Term boundaries are exact starts of higher calendar units: day view separates Sunday/Monday more widely; month view separates quarters; quarter view separates years. Day parts also separate the Morning cycle start, fortnights the first start within a year, and years decades. Coincident higher-term starts such as month starts also widen the gap. Temporal supplies boundaries, including DST and negative indices.
+- Pure strokeGeometry helpers supply grid bounds, event insets and draft placement. Calendar coordinates and cursor anchoring are unchanged; spacing changes painted area inside cells, without adding time or shifting dates. Multi-cell event bodies remain continuous.
+- The desktop window remains 640x520; tall SVG content scrolls within it. Phones retain an unscaled scene crop, existing controls and black landscape rails. The uploaded polygon image stays behind the grid/glass bands.
+
+assignRowsForUnit and its hints are unchanged. Non-overlapping events can still share a row; this task does not redesign packing.
 
 ## Verification
 
-73/73 Node tests pass, including the updated all-stroke routing checks, multi-unit native border/subtitle rendering, term gutters at every displayed level, narrow zoom, pre-1970 dates and DST. Existing Cookbook isolation/lifecycle, cursor anchoring, touch input, draft actions and known row-cache characterization tests pass. npm run build passes; Vite serves HTTP 200.
+75/75 Node tests pass, including whole-rectangle inset geometry for one-, two- and five-unit events, non-native full bounds, narrow widths, short unit labels, repeated-hour offsets, glass/label rendering and Header removal. Calendar boundaries, half-open projection, Cookbook isolation/lifecycle, cursor anchoring, touch and creation tests remain passing. npm run build passes and Vite serves HTTP 200.
 
-Headless Chromium checks pass across all ten zoom levels: twenty event records remain present, only the stroke background is mounted, all example subtitles exist, and event checkmark paths are absent. Browser geometry confirms 39px bodies on 40px pitch and the painted 2px native border inset for a two-day event in day view. Desktop year view scrolls a 889px content scene inside its 520px window. Phone 390x844 and landscape 844x390 fit without horizontal page overflow and retain black rails. No page runtime errors were observed.
+Headless Chromium checks pass at all ten displayed units: each empty cell has a faint unit label, occupied cells omit it, glass divider bands are present, all twenty events remain, and no Header arrows or colored event outlines render. A native two-day example is measured 2px inward on left/right and 35px high, versus the surrounding 39px cell. Inline creation and keyboard pan pass. A tall desktop year scene scrolls inside the 520px window. Phone 390x844 and landscape 844x390 load, zoom and fit without horizontal page overflow; black landscape rails remain. No page runtime errors were observed.
+
+The previous November 2 version passed 73 tests and browser checks with colored outlines; that outline behavior has now been replaced by the whole-rectangle inset above.
 
 ## Remaining limits
 
-Physical iPhone/iPad Safari remains unverified. Descriptions have no inline editing UI. Long strokes whose left edge is offscreen can still have offscreen labels; clipping prevents overflow but does not reposition text. Row-cache writes remain derived rather than persisted to canonical events. Drafts still resolve against the current viewport on submission. The hidden legacy Lists component retains its old clipping limits. Scheduling remains session-only, with no backend, persistence, drag/resize or new lane algorithm. These changes do not resolve older dependency audit findings or font availability differences.
+Independent stroke groups are planned, not implemented. Physical iPhone/iPad Safari is unverified. Descriptions have no inline editor. Long strokes whose left edge is offscreen can still have offscreen text; clipping does not reposition it. Row-cache writes remain derived rather than stored in canonical events. Drafts resolve against the viewport at submission. Dormant Lists retains old clipping limits. Scheduling is session-only; no backend, persistence, drag/resize or new packing algorithm. Prior development dependency audit findings and font fallback differences remain.
